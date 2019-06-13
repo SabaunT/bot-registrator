@@ -162,7 +162,7 @@ def main():
         },
 
         fallbacks=[CommandHandler('cancel', cancel)],
-        per_user=True
+        per_user=True #убрать?
     )
 
     dp.add_handler(conv_handler)
