@@ -1,8 +1,9 @@
 import os
 import logging
 from constants import Registry
+from calendar_telegram import telegramcalendar
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler, CallbackQueryHandler,
                           ConversationHandler)
 
 
@@ -71,7 +72,7 @@ TODO:
 '''
 def register(bot, update):
     user = update.message.chat.id
-    reply_keyboard = [['Вт', 'Чт', 'Не доделано']]
+    reply_keyboard = telegramcalendar.create_calendar()
     record_type = update.message.text
 
     patient_type = temporary_storage[user]['patient_type']
@@ -79,14 +80,22 @@ def register(bot, update):
 
     message_reply = Registry.record_info(update.message.text, patient_type)
     message_reply += 'Выберите дату.'
-    update.message.reply_text(message_reply, reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+    update.message.reply_text(message_reply, reply_markup=reply_keyboard)
 
     return DATE
 
 
 def date(bot, update):
-    message_reply = 'Ты выбрал ' + update.message.text
-    update.message.reply_text(message_reply, reply_markup=ReplyKeyboardRemove())
+    """
+    ИЗМЕНИ ПРОЦЕССИНГ!
+    """
+    selected, date_ = telegramcalendar.process_calendar_selection(bot, update)
+    if selected:
+        bot.send_message(
+            chat_id=update.callback_query.from_user.id,
+            text="You selected %s" % (date_.strftime("%d/%m/%Y")),
+            reply_markup=ReplyKeyboardRemove()
+        )
 
     return FINAL
 
@@ -144,7 +153,7 @@ def main():
         states={
             REGISTER: [RegexHandler('^(Обычная|Расширенная)$', register)],
 
-            DATE: [RegexHandler('^(Вт|Чт)$', date)],
+            DATE: [CallbackQueryHandler(date)],
 
             FINAL: [MessageHandler(Filters.text, final)],
 
@@ -152,7 +161,8 @@ def main():
                        CommandHandler('skip', skip_location)],
         },
 
-        fallbacks=[CommandHandler('cancel', cancel)]
+        fallbacks=[CommandHandler('cancel', cancel)],
+        per_user=True
     )
 
     dp.add_handler(conv_handler)
