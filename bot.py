@@ -64,11 +64,10 @@ def _check_hot_record(user_id: int):
 
 '''
 TODO:
-1/ Определиться с правильностью сообщений
-2/ Разобраться с возможностью показывать дату
-3/ Подключить БД - orm
-4/ Разобраться с работой логгера и определиться как лучше логгировать
-5/ Выкатить в прод
+1/ Подключить БД
+2/ Адаптировать показ дат вместе с данными, сохраняемыми в БД
+3/ Разобраться с работой логгера и определиться как лучше логгировать
+4/ Выкатить в прод
 '''
 def register(bot, update):
     user = update.message.chat.id
@@ -96,13 +95,6 @@ def date(bot, update):
             reply_markup=ReplyKeyboardRemove()
         )
         return ConversationHandler.END
-
-
-def final(bot, update):
-    print('final')
-    message_reply = Registry.end_registry()
-    update.message.reply_text(message_reply)
-    return ConversationHandler.END
 
 
 def cancel(bot, update):
