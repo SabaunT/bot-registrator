@@ -1,7 +1,7 @@
 import os
 import logging
 from helpers.constants import Registry
-from helpers.calendar_telegram import telegramcalendar
+from helpers import telegramcalendar
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler, CallbackQueryHandler,
                           ConversationHandler)
