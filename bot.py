@@ -1,7 +1,7 @@
 import os
 import logging
-from constants import Registry
-from calendar_telegram import telegramcalendar
+from helpers.constants import Registry
+from helpers.calendar_telegram import telegramcalendar
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler, CallbackQueryHandler,
                           ConversationHandler)
@@ -66,6 +66,8 @@ def _check_hot_record(user_id: int):
 TODO:
 1/ Подключить БД
 2/ Адаптировать показ дат вместе с данными, сохраняемыми в БД
+3/ Отсылать админу сообщения о новой записи
+4/ Добавить поддержку /change
 3/ Разобраться с работой логгера и определиться как лучше логгировать
 4/ Выкатить в прод
 '''
