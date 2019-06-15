@@ -1,8 +1,9 @@
 import os
 import logging
 from constants import Registry
+from calendar_telegram import telegramcalendar
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler, CallbackQueryHandler,
                           ConversationHandler)
 
 
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 assert BOT_TOKEN
 
-REGISTER, DATE, FINAL, LOCATION, BIO = range(5)
+REGISTER, DATE = range(2)
 
 DB_mock = {}
 temporary_storage = {}
@@ -63,15 +64,14 @@ def _check_hot_record(user_id: int):
 
 '''
 TODO:
-1/ Определиться с правильностью сообщений
-2/ Разобраться с возможностью показывать дату
-3/ Подключить БД - orm
-4/ Разобраться с работой логгера и определиться как лучше логгировать
-5/ Выкатить в прод
+1/ Подключить БД
+2/ Адаптировать показ дат вместе с данными, сохраняемыми в БД
+3/ Разобраться с работой логгера и определиться как лучше логгировать
+4/ Выкатить в прод
 '''
 def register(bot, update):
     user = update.message.chat.id
-    reply_keyboard = [['Вт', 'Чт', 'Не доделано']]
+    reply_keyboard = telegramcalendar.create_calendar()
     record_type = update.message.text
 
     patient_type = temporary_storage[user]['patient_type']
@@ -79,50 +79,28 @@ def register(bot, update):
 
     message_reply = Registry.record_info(update.message.text, patient_type)
     message_reply += 'Выберите дату.'
-    update.message.reply_text(message_reply, reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+    update.message.reply_text(message_reply, reply_markup=reply_keyboard)
 
     return DATE
 
 
 def date(bot, update):
-    message_reply = 'Ты выбрал ' + update.message.text
-    update.message.reply_text(message_reply, reply_markup=ReplyKeyboardRemove())
-
-    return FINAL
-
-
-def final(bot, update):
-    print('final')
-    message_reply = Registry.end_registry()
-    update.message.reply_text(message_reply)
-    return ConversationHandler.END
-
-
-def location(bot, update):
-    user = update.message.from_user
-    user_location = update.message.location
-    logger.info("Location of %s: %f / %f", user.first_name, user_location.latitude,
-                user_location.longitude)
-    update.message.reply_text('Maybe I can visit you sometime! '
-                              'At last, tell me something about yourself.')
-
-    return BIO
-
-
-def skip_location(bot, update):
-    user = update.message.from_user
-    logger.info("User %s did not send a location.", user.first_name)
-    update.message.reply_text('You seem a bit paranoid! '
-                              'At last, tell me something about yourself.')
-
-    return BIO
+    is_selected, chosen_date = telegramcalendar.process_calendar_selection(bot, update)
+    if is_selected:
+        message_reply = 'Вы записаны на {}. '.format(chosen_date.strftime("%d/%m/%Y"))
+        message_reply += Registry.end_registry()
+        bot.send_message(
+            chat_id=update.callback_query.from_user.id,
+            text=message_reply,
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return ConversationHandler.END
 
 
 def cancel(bot, update):
     user = update.message.from_user
-    print(update)
     logger.info("User %s canceled the conversation.", user.first_name)
-    update.message.reply_text('Bye! I hope we can talk again some day.',
+    update.message.reply_text('Здоровья Вам! Если что, обязательно обращайтесь.',
                               reply_markup=ReplyKeyboardRemove())
 
     return ConversationHandler.END
@@ -144,12 +122,7 @@ def main():
         states={
             REGISTER: [RegexHandler('^(Обычная|Расширенная)$', register)],
 
-            DATE: [RegexHandler('^(Вт|Чт)$', date)],
-
-            FINAL: [MessageHandler(Filters.text, final)],
-
-            LOCATION: [MessageHandler(Filters.location, location),
-                       CommandHandler('skip', skip_location)],
+            DATE: [CallbackQueryHandler(date)],
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]
