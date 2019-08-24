@@ -25,7 +25,7 @@ SECRET_KEY = '6p)&39x2+w5(%sz9*za6k_x18$o^_txu)b+7dgk9)ddb*ah_+$'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
 
 # Application definition
@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'apps.tf_bot'
 ]
 
 MIDDLEWARE = [
@@ -74,9 +76,14 @@ WSGI_APPLICATION = 'dr_tf_bot.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
+    # TODO скрой настройки
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'tf_bot',
+        'USER': 'tf_bot_user',
+        'PASSWORD': 'tf_bot_password',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
 }
 
