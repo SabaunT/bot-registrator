@@ -6,21 +6,22 @@
 Base methods for calendar keyboard creation and processing.
 """
 
-
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup,ReplyKeyboardRemove
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 import datetime
 import calendar
 
-def create_callback_data(action,year,month,day):
+
+def create_callback_data(action, year, month, day):
     """ Create the callback data associated to each button"""
-    return ";".join([action,str(year),str(month),str(day)])
+    return ";".join([action, str(year), str(month), str(day)])
+
 
 def separate_callback_data(data):
     """ Separate the callback data"""
     return data.split(";")
 
 
-def create_calendar(year=None,month=None):
+def create_calendar(year=None, month=None):
     """
     Create an inline keyboard with the provided year and month
     :param int year: Year to use in the calendar, if None the current year is used.
@@ -32,32 +33,32 @@ def create_calendar(year=None,month=None):
     if month == None: month = now.month
     data_ignore = create_callback_data("IGNORE", year, month, 0)
     keyboard = []
-    #First row - Month and Year
-    row=[]
-    row.append(InlineKeyboardButton(calendar.month_name[month]+" "+str(year),callback_data=data_ignore))
+    # First row - Month and Year
+    row = []
+    row.append(InlineKeyboardButton(calendar.month_name[month] + " " + str(year), callback_data=data_ignore))
     keyboard.append(row)
-    #Second row - Week Days
-    row=[]
+    # Second row - Week Days
+    row = []
     for day in ["Tu", "Fr", "Sa"]:
-        row.append(InlineKeyboardButton(day,callback_data=data_ignore))
+        row.append(InlineKeyboardButton(day, callback_data=data_ignore))
     keyboard.append(row)
 
     my_calendar = [
         [week[1], week[4], week[5]] for week in calendar.monthcalendar(year, month)
     ]
     for week in my_calendar:
-        row=[]
+        row = []
         for day in week:
-            if(day==0):
-                row.append(InlineKeyboardButton(" ",callback_data=data_ignore))
+            if (day == 0):
+                row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
-                row.append(InlineKeyboardButton(str(day),callback_data=create_callback_data("DAY",year,month,day)))
+                row.append(InlineKeyboardButton(str(day), callback_data=create_callback_data("DAY", year, month, day)))
         keyboard.append(row)
 
     return InlineKeyboardMarkup(keyboard)
 
 
-def process_calendar_selection(bot,update):
+def process_calendar_selection(bot, update):
     """
     Process the callback_query. This method generates a new calendar if forward or
     backward is pressed. This method should be called inside a CallbackQueryHandler.
@@ -66,19 +67,19 @@ def process_calendar_selection(bot,update):
     :return: Returns a tuple (Boolean,datetime.datetime), indicating if a date is selected
                 and returning the date if so.
     """
-    ret_data = (False,None)
+    ret_data = (False, None)
     query = update.callback_query
-    (action,year,month,day) = separate_callback_data(query.data)
+    (action, year, month, day) = separate_callback_data(query.data)
     curr = datetime.datetime(int(year), int(month), 1)
     if action == "IGNORE":
-        bot.answer_callback_query(callback_query_id= query.id)
+        bot.answer_callback_query(callback_query_id=query.id)
     elif action == "DAY":
         bot.edit_message_text(text=query.message.text,
-            chat_id=query.message.chat_id,
-            message_id=query.message.message_id
-            )
-        ret_data = True,datetime.datetime(int(year),int(month),int(day))
+                              chat_id=query.message.chat_id,
+                              message_id=query.message.message_id
+                              )
+        ret_data = True, datetime.datetime(int(year), int(month), int(day))
     else:
-        bot.answer_callback_query(callback_query_id= query.id,text="Something went wrong!")
+        bot.answer_callback_query(callback_query_id=query.id, text="Something went wrong!")
         # UNKNOWN
     return ret_data
