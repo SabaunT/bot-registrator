@@ -29,12 +29,12 @@ def create_calendar(year=None, month=None):
     :return: Returns the InlineKeyboardMarkup object with the calendar.
     """
     now = datetime.datetime.now()
-    if year == None: year = now.year
-    if month == None: month = now.month
+    if year is None: year = now.year
+    if month is None: month = now.month
     data_ignore = create_callback_data("IGNORE", year, month, 0)
     keyboard = []
     # First row - Month and Year
-    row = []
+    row = list()
     row.append(InlineKeyboardButton(calendar.month_name[month] + " " + str(year), callback_data=data_ignore))
     keyboard.append(row)
     # Second row - Week Days
@@ -49,7 +49,7 @@ def create_calendar(year=None, month=None):
     for week in my_calendar:
         row = []
         for day in week:
-            if (day == 0):
+            if day == 0:
                 row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
                 row.append(InlineKeyboardButton(str(day), callback_data=create_callback_data("DAY", year, month, day)))
@@ -70,7 +70,6 @@ def process_calendar_selection(bot, update):
     ret_data = (False, None)
     query = update.callback_query
     (action, year, month, day) = separate_callback_data(query.data)
-    curr = datetime.datetime(int(year), int(month), 1)
     if action == "IGNORE":
         bot.answer_callback_query(callback_query_id=query.id)
     elif action == "DAY":
