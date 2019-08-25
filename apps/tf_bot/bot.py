@@ -1,10 +1,12 @@
 import os
 import logging
-from helpers.constants import Registry
-from helpers import telegramcalendar
+
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler, CallbackQueryHandler,
                           ConversationHandler)
+
+from helpers.constants import Registry
+from helpers import telegramcalendar
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -64,7 +66,7 @@ def _check_hot_record(user_id: int):
 
 '''
 TODO:
-1/ Подключить БД с помощью джанго
+1/ Подключить БД с помощью джанго (ГОТОВО)
 2/ адаптировать показ правильных сообщений вместе с датами
 3/ Адаптировать показ дат вместе с данными, сохраняемыми в БД
 4/ Отсылать админу сообщения о новой записи
