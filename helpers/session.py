@@ -16,22 +16,22 @@ class TemporaryData(dict):
     }
     """
 
-    _ATTRIBUTES = {'patient_type, record_type, day, start_time'}
+    _ATTRIBUTES = {'patient_type', 'record_type', 'day', 'start_time'}
 
     def __init__(self):
         super().__init__()
 
     def __getattr__(self, item):
         if item in self._ATTRIBUTES:
-            self.__getitem__(item)
-
+            return self.__getitem__(item)
+        
         raise AttributeError(f'Key {item} is forbidden')
 
     def __setattr__(self, key, value):
         if key in self._ATTRIBUTES:
             self.__setitem__(key, value)
-
-        raise AttributeError(f'Key {key} is forbidden')
+        else:
+            raise AttributeError(f'Key {key} is forbidden')
 
 
 class TemporarySession(dict):

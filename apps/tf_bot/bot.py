@@ -22,8 +22,6 @@ assert BOT_TOKEN
 
 REGISTER, DATE = range(2)
 
-DB_mock = {}
-temporary_storage = {}
 session_storage = TemporarySession()
 
 
