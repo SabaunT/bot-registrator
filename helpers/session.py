@@ -2,16 +2,45 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 
 
+# todo стоит ли жестко закреплять структуру?
 class TemporaryData(dict):
     """
-    Temporary storage emulating session.
+    Data for TemporarySession object:
+
+    {
+      record_type: record_type,
+      patient_type: patient_type (primary, secondary)
+      day: day,
+      start_time: start_time
+    }
+    """
+
+    _ATTRIBUTES = {'patient_type, record_type, day, start_time'}
+
+    def __init__(self):
+        super().__init__()
+
+    def __getattr__(self, item):
+        if item in self._ATTRIBUTES:
+            self.__getitem__(item)
+
+        raise AttributeError(f'Key {item} is forbidden')
+
+    def __setattr__(self, key, value):
+        if key in self._ATTRIBUTES:
+            self.__setitem__(key, value)
+
+        raise AttributeError(f'Key {key} is forbidden')
+
+
+class TemporarySession(dict):
+    """
+    Object emulating session.
 
     Structure:
     {
       telegram_id: {
-                    record_type: record_type,
-                    day: day,
-                    start_time: start_time
+                      TemporaryData()
                     }
     }
     """
@@ -19,20 +48,11 @@ class TemporaryData(dict):
     def __init__(self, *args):
         super().__init__(*args)
 
-    def add_user(self, telegram_id: str):
-        self[telegram_id] = dict()
+    def add_user(self, telegram_id: str) -> TemporaryData:
+        self[telegram_id] = TemporaryData()
+        return self[telegram_id]
 
-    def add_record_type(self, telegram_id: str, record_type: str):
-        self[telegram_id]['record_type'] = record_type
-
-    def add_record_day(self, telegram_id: str, day: datetime):
-        self[telegram_id]['day'] = day
-
-    def add_record_start_time(self, telegram_id: str, start_time: int):
-        # TODO too explicit
-        if not start_time in range(9, 22):
-            ValidationError('Wrong start time for record')
-
-        self[telegram_id]['start_time'] = start_time
+    def clear_session(self, telegram_id: str):
+        del self[telegram_id]
 
     # Todo метод подготовки к сохранению

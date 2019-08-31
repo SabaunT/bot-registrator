@@ -5,13 +5,18 @@ from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler, CallbackQueryHandler,
                           ConversationHandler)
 
+
+from apps.tf_bot.models import Patient, Record
 from helpers.constants import Registry
 from helpers import telegramcalendar
+from helpers.session import TemporarySession, TemporaryData
 
 
+# TODO поменяй логгер
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Todo это вообще в другое место
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 assert BOT_TOKEN
 
@@ -19,6 +24,8 @@ REGISTER, DATE = range(2)
 
 DB_mock = {}
 temporary_storage = {}
+session_storage = TemporarySession()
+
 """
 user_id: {
         тип записи
@@ -30,20 +37,26 @@ user_id: {
 
 
 def start(bot, update):
-    user = update.message.chat.id
+    user_id = update.message.chat.id
     reply_keyboard = [['Обычная', 'Расширенная']]
 
-    temporary_storage[user] = {}
-    print(user)
+    current_user_session: TemporaryData = session_storage.add_user(user_id)
 
-    if user in DB_mock: #ORM
-        _change_records_actuality(user)
+    print(user_id)
 
-        temporary_storage[user]['patient_type'] = 'secondary'
-        message_text = Registry.greeting(is_new=False)
-    else:
-        temporary_storage[user]['patient_type'] = 'primary'
-        message_text = Registry.greeting(is_new=True)
+    try:
+        # todo рефактор с добавлением типа? копипаст будто
+        current_patient = Patient.objects.get(telegram_id=user_id)
+        current_user_session.patient_type = 'secondary'
+        print('[DEBUG] exists')
+    except Patient.DoesNotExist:
+        current_patient = Patient.objects.create(telegram_id=user_id)
+        current_user_session.patient_type = 'primary'
+        print('[DEBUG] A new one')
+
+    message_text = Registry.greeting(
+        is_new=True if current_user_session.patient_type == 'primary' else False
+    )
 
     update.message.reply_text(message_text, reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     return REGISTER
