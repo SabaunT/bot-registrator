@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 
 
 # todo стоит ли жестко закреплять структуру?
+# todo стоит ли сделать контекстные для данных классов exceptioны?
 class TemporaryData(dict):
     """
     Data for TemporarySession object:

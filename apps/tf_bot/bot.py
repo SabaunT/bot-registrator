@@ -26,36 +26,26 @@ DB_mock = {}
 temporary_storage = {}
 session_storage = TemporarySession()
 
-"""
-user_id: {
-        тип записи
-        когда была осуществлена запись
-        на какое число и время
-        актуальность записи
-        }
-"""
-
 
 def start(bot, update):
     user_id = update.message.chat.id
     reply_keyboard = [['Обычная', 'Расширенная']]
 
-    current_user_session: TemporaryData = session_storage.add_user(user_id)
+    current_patient_session_data: TemporaryData = session_storage.add_user(user_id)
 
     print(user_id)
 
     try:
-        # todo рефактор с добавлением типа? копипаст будто
-        current_patient = Patient.objects.get(telegram_id=user_id)
-        current_user_session.patient_type = 'secondary'
+        Patient.objects.get(telegram_id=user_id)
+        current_patient_session_data.patient_type = 'secondary'
         print('[DEBUG] exists')
     except Patient.DoesNotExist:
-        current_patient = Patient.objects.create(telegram_id=user_id)
-        current_user_session.patient_type = 'primary'
+        Patient.objects.create(telegram_id=user_id)
+        current_patient_session_data.patient_type = 'primary'
         print('[DEBUG] A new one')
 
     message_text = Registry.greeting(
-        is_new=True if current_user_session.patient_type == 'primary' else False
+        is_new=True if current_patient_session_data.patient_type == 'primary' else False
     )
 
     update.message.reply_text(message_text, reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
@@ -89,14 +79,19 @@ TODO:
 8/ Выкатить в прод
 '''
 def register(bot, update):
-    user = update.message.chat.id
-    reply_keyboard = telegramcalendar.create_calendar()
+    """
+    record_type - Обычная или Расширенная
+    """
+    user_id = update.message.chat.id
     record_type = update.message.text
 
-    patient_type = temporary_storage[user]['patient_type']
-    temporary_storage[user]['record_type'] = record_type
+    reply_keyboard = telegramcalendar.create_calendar()
 
-    message_reply = Registry.record_info(update.message.text, patient_type)
+    current_patient: TemporaryData = session_storage.get(user_id)
+    current_patient_type = current_patient.patient_type
+    current_patient.record_type = record_type
+
+    message_reply = Registry.record_info(current_patient.record_type, current_patient_type)
     message_reply += 'Выберите дату.'
     update.message.reply_text(message_reply, reply_markup=reply_keyboard)
 
