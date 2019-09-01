@@ -30,6 +30,10 @@ class RecordData(object):
         return cls(record_data)
 
     def __init__(self, record_data: dict = None):
+        internal_record_state_dir = os.path.join(self.BOT_DIR, 'internal_record_state')
+        if not os.path.exists(internal_record_state_dir):
+            os.makedirs(internal_record_state_dir)
+
         self.record_data = record_data if record_data is not None else self.load_record_state()
 
     def dump_record_state(self):
