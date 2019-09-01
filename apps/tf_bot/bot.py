@@ -33,14 +33,8 @@ def start(bot, update):
 
     print(user_id)
 
-    try:
-        Patient.objects.get(telegram_id=user_id)
-        current_patient_session_data.patient_type = 'secondary'
-        print('[DEBUG] exists')
-    except Patient.DoesNotExist:
-        Patient.objects.create(telegram_id=user_id)
-        current_patient_session_data.patient_type = 'primary'
-        print('[DEBUG] A new one')
+    _, created = Patient.objects.get_or_create(telegram_id=user_id)
+    current_patient_session_data.patient_type = 'primary' if created else 'secondary'
 
     message_text = Registry.greeting(
         is_new=True if current_patient_session_data.patient_type == 'primary' else False
@@ -89,7 +83,7 @@ def register(bot, update):
 
     reply_keyboard = telegramcalendar.create_calendar(current_patient.record_type)
 
-    message_reply = Registry.record_info(current_patient.record_type, current_patient_type)
+    message_reply = Registry.record_info(record_type, current_patient_type)
     message_reply += 'Выберите дату.'
     update.message.reply_text(message_reply, reply_markup=reply_keyboard)
 

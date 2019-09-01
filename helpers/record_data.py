@@ -55,6 +55,7 @@ class RecordData(object):
         weekday_of_day = datetime(now.year, now.month, day).weekday()
         free_intervals_in_day = Registry.AVAILABLE_RECORDS[weekday_of_day].difference(reserved_intervals_in_day)
 
+        # if free_intervals_in_day == False и дальше выходи
         if record_type == Record.REGULAR:
             print('continue logic')
 
@@ -81,11 +82,3 @@ class RecordData(object):
         merged_my_month_calendar = list(chain.from_iterable(my_month_calendar))
         return trim_zeros(merged_my_month_calendar)
 
-
-if __name__ == '__main__':
-    a = RecordData.new_data_set(2019, 9)
-    print(a.record_data)
-    a.dump_record_state()
-
-    b = RecordData()
-    print(b.record_data)

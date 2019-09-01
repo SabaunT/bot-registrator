@@ -41,11 +41,14 @@ def create_calendar(record_type: str, year=None, month=None):
     if month is None:
         month = now.month
 
-    if not (os.path.exists(RecordData.PICKLING_FILE) or RecordData().check_data_set_actuality()):
+    if not os.path.exists(RecordData.PICKLING_FILE):
         record_data_set = RecordData.new_data_set(year, month)
         record_data_set.dump_record_state()
-    else:
+    elif RecordData().check_data_set_actuality():
         record_data_set = RecordData()
+    else:
+        record_data_set = RecordData.new_data_set(year, month)
+        record_data_set.dump_record_state()
 
     data_ignore = create_callback_data("IGNORE", year, month, 0)
     keyboard = []
