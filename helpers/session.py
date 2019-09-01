@@ -2,8 +2,6 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 
 
-# todo стоит ли жестко закреплять структуру?
-# todo стоит ли сделать контекстные для данных классов exceptioны?
 class TemporaryData(dict):
     """
     Data for TemporarySession object:
@@ -24,7 +22,7 @@ class TemporaryData(dict):
     def __getattr__(self, item):
         if item in self._ATTRIBUTES:
             return self.__getitem__(item)
-        
+
         raise AttributeError(f'Key {item} is forbidden')
 
     def __setattr__(self, key, value):

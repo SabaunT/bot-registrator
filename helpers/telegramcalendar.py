@@ -4,11 +4,16 @@
 #
 """
 Base methods for calendar keyboard creation and processing.
-"""
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
+NEED MAJOR REFACTOR !!!!!!!!!!!!!!!!!!!!!!!
+"""
+import os
 import datetime
 import calendar
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
+
+from helpers.record_data import RecordData
 
 
 def create_callback_data(action, year, month, day):
@@ -29,8 +34,16 @@ def create_calendar(year=None, month=None):
     :return: Returns the InlineKeyboardMarkup object with the calendar.
     """
     now = datetime.datetime.now()
-    if year is None: year = now.year
-    if month is None: month = now.month
+    if year is None:
+        year = now.year
+    if month is None:
+        month = now.month
+
+    if not os.path.exists(RecordData.PICKLING_FILE):
+        record_data_set = RecordData.new_data_set(year, month)
+    else:
+        record_data_set = RecordData()
+
     data_ignore = create_callback_data("IGNORE", year, month, 0)
     keyboard = []
     # First row - Month and Year
@@ -49,11 +62,14 @@ def create_calendar(year=None, month=None):
     for week in my_calendar:
         row = []
         for day in week:
-            if day == 0:
+            if day == 0 or day <= now.day:
                 row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
                 row.append(InlineKeyboardButton(str(day), callback_data=create_callback_data("DAY", year, month, day)))
         keyboard.append(row)
+    for each in keyboard[4:]:
+        for e in each:
+            print(e.text)
 
     return InlineKeyboardMarkup(keyboard)
 

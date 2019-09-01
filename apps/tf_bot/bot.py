@@ -7,7 +7,7 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, Rege
 
 
 from apps.tf_bot.models import Patient, Record
-from helpers.constants import Registry
+from helpers.registry_constants import Registry
 from helpers import telegramcalendar
 from helpers.session import TemporarySession, TemporaryData
 
