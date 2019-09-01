@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 assert BOT_TOKEN
 
-REGISTER, DATE = range(2)
+REGISTER, DATE, INTERVAL = range(3)
 
 session_storage = TemporarySession()
 
@@ -83,11 +83,11 @@ def register(bot, update):
     user_id = update.message.chat.id
     record_type = update.message.text
 
-    reply_keyboard = telegramcalendar.create_calendar()
-
     current_patient: TemporaryData = session_storage.get(user_id)
     current_patient_type = current_patient.patient_type
-    current_patient.record_type = record_type
+    current_patient.record_type = Record.REGULAR if record_type == 'Обычная' else Record.EXTENDED
+
+    reply_keyboard = telegramcalendar.create_calendar(current_patient.record_type)
 
     message_reply = Registry.record_info(current_patient.record_type, current_patient_type)
     message_reply += 'Выберите дату.'
@@ -100,13 +100,20 @@ def date(bot, update):
     is_selected, chosen_date = telegramcalendar.process_calendar_selection(bot, update)
     if is_selected:
         message_reply = 'Вы записаны на {}. '.format(chosen_date.strftime("%d/%m/%Y"))
-        message_reply += Registry.end_registry()
+        # message_reply += Registry.end_registry()
+        message_reply += 'Выберите интервал записи'
+
+        reply_intervals = [['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']]
         bot.send_message(
             chat_id=update.callback_query.from_user.id,
             text=message_reply,
-            reply_markup=ReplyKeyboardRemove()
+            reply_markup=ReplyKeyboardMarkup(reply_intervals, one_time_keyboard=True)
         )
-        return ConversationHandler.END
+        return INTERVAL
+
+
+def time_interval(bot, update):
+    return ConversationHandler.END
 
 
 def cancel(bot, update):
@@ -135,6 +142,8 @@ def main():
             REGISTER: [RegexHandler('^(Обычная|Расширенная)$', register)],
 
             DATE: [CallbackQueryHandler(date)],
+
+            INTERVAL: []
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]

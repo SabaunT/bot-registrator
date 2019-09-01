@@ -1,9 +1,13 @@
 import os
 import calendar
+from datetime import datetime
 from itertools import chain
 from pickle import load, dump
 
 from numpy import trim_zeros
+
+from apps.tf_bot.models import Record
+from helpers.registry_constants import Registry
 
 
 class RecordData(object):
@@ -35,6 +39,24 @@ class RecordData(object):
             os.makedirs(internal_record_state_dir)
 
         self.record_data = record_data if record_data is not None else self.load_record_state()
+
+    def check_data_set_actuality(self) -> bool:
+        """
+        Checks if records data set could be used
+        :return: bool, true if data set is actual, false - instead
+        """
+        now = datetime.now()
+        return self.record_data["month"] == now.month
+
+    def get_intervals(self, day, record_type):
+        reserved_intervals_in_day: set = self.record_data["records_in_day"][day]
+
+        now = datetime.now()
+        weekday_of_day = datetime(now.year, now.month, day).weekday()
+        free_intervals_in_day = Registry.AVAILABLE_RECORDS[weekday_of_day].difference(reserved_intervals_in_day)
+
+        if record_type == Record.REGULAR:
+            print('continue logic')
 
     def dump_record_state(self):
         with open(self.PICKLING_FILE, 'wb') as f:

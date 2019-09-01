@@ -5,7 +5,8 @@
 """
 Base methods for calendar keyboard creation and processing.
 
-NEED MAJOR REFACTOR !!!!!!!!!!!!!!!!!!!!!!!
+NEED MAJOR REFACTOR !!!!!!!!!!!
+VERY BAD CODE!!!!!!!!!!
 """
 import os
 import datetime
@@ -14,6 +15,7 @@ import calendar
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 
 from helpers.record_data import RecordData
+from helpers.registry_constants import Registry
 
 
 def create_callback_data(action, year, month, day):
@@ -26,7 +28,7 @@ def separate_callback_data(data):
     return data.split(";")
 
 
-def create_calendar(year=None, month=None):
+def create_calendar(record_type: str, year=None, month=None):
     """
     Create an inline keyboard with the provided year and month
     :param int year: Year to use in the calendar, if None the current year is used.
@@ -39,8 +41,9 @@ def create_calendar(year=None, month=None):
     if month is None:
         month = now.month
 
-    if not os.path.exists(RecordData.PICKLING_FILE):
+    if not (os.path.exists(RecordData.PICKLING_FILE) or RecordData().check_data_set_actuality()):
         record_data_set = RecordData.new_data_set(year, month)
+        record_data_set.dump_record_state()
     else:
         record_data_set = RecordData()
 
@@ -51,7 +54,7 @@ def create_calendar(year=None, month=None):
     row.append(InlineKeyboardButton(calendar.month_name[month] + " " + str(year), callback_data=data_ignore))
     keyboard.append(row)
     # Second row - Week Days
-    row = []
+    row = list()
     for day in ["Tu", "Fr", "Sa"]:
         row.append(InlineKeyboardButton(day, callback_data=data_ignore))
     keyboard.append(row)
@@ -59,17 +62,24 @@ def create_calendar(year=None, month=None):
     my_calendar = [
         [week[1], week[4], week[5]] for week in calendar.monthcalendar(year, month)
     ]
+
     for week in my_calendar:
         row = []
         for day in week:
             if day == 0 or day <= now.day:
                 row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
-                row.append(InlineKeyboardButton(str(day), callback_data=create_callback_data("DAY", year, month, day)))
+                # CALL HETE GET_INTERVALS
+                available_records_day = Registry.AVAILABLE_RECORDS[datetime.datetime(year, month, day).weekday()]
+                if available_records_day.difference(record_data_set.record_data['records_in_day'][day]):
+                    row.append(InlineKeyboardButton(day, callback_data=create_callback_data("DAY", year, month, day)))
         keyboard.append(row)
-    for each in keyboard[4:]:
+
+    for each in keyboard[2:]:
         for e in each:
             print(e.text)
+
+    # list_to_filter = keyboard[2:].copy()
 
     return InlineKeyboardMarkup(keyboard)
 
@@ -98,3 +108,6 @@ def process_calendar_selection(bot, update):
         bot.answer_callback_query(callback_query_id=query.id, text="Something went wrong!")
         # UNKNOWN
     return ret_data
+
+if __name__ == '__main__':
+    create_calendar(2019, 9)
