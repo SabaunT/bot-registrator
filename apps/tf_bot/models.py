@@ -1,5 +1,7 @@
 from django.db import models
-from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
+
+from django.core.validators import RegexValidator
+from helpers.validators import day_of_week_validator, record_interval_validator
 
 
 class Patient(models.Model):
@@ -21,6 +23,8 @@ class Patient(models.Model):
         return patient
 
 class Record(models.Model):
+    # todo удали enum этот
+    # todo вставь констрэинт через sql
     REGULAR = 'Regular'
     EXTENDED = 'Extended'
     APPOINTMENTS = (
@@ -29,9 +33,8 @@ class Record(models.Model):
     )
 
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT)
-    record_type = models.CharField(max_length=20, choices=APPOINTMENTS, default=REGULAR)
-    day = models.DateField()
-    record_start_time = models.IntegerField(default=9, validators=[MinValueValidator(9), MaxValueValidator(21)])
+    record_start_time = models.DateTimeField(validators=[day_of_week_validator, record_interval_validator])
+    record_end_time = models.DateTimeField(validators=[day_of_week_validator, record_interval_validator])
 
     class Meta:
         verbose_name = "Запись"
