@@ -41,6 +41,7 @@ def create_calendar(record_type: str, year=None, month=None):
     if month is None:
         month = now.month
 
+    # todo need refactor
     if not os.path.exists(RecordData.PICKLING_FILE):
         record_data_set = RecordData.new_data_set(year, month)
         record_data_set.dump_record_state()
@@ -72,9 +73,8 @@ def create_calendar(record_type: str, year=None, month=None):
             if day == 0 or day <= now.day:
                 row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
-                # CALL HETE GET_INTERVALS
-                available_records_day = Registry.AVAILABLE_RECORDS[datetime.datetime(year, month, day).weekday()]
-                if available_records_day.difference(record_data_set.record_data['records_in_day'][day]):
+                keyboard_intervals: set = record_data_set.get_keyboard_intervals(day, record_type)
+                if len(keyboard_intervals) != 0:
                     row.append(InlineKeyboardButton(day, callback_data=create_callback_data("DAY", year, month, day)))
         keyboard.append(row)
 

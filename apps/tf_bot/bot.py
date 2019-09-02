@@ -26,6 +26,7 @@ session_storage = TemporarySession()
 
 
 def start(bot, update):
+    # todo добавь проверку того, что человек уже имеет АКТУАЛЬНУЮ запись
     user_id = update.message.chat.id
     reply_keyboard = [['Обычная', 'Расширенная']]
 

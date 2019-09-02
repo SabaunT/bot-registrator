@@ -40,25 +40,6 @@ class RecordData(object):
 
         self.record_data = record_data if record_data is not None else self.load_record_state()
 
-    def check_data_set_actuality(self) -> bool:
-        """
-        Checks if records data set could be used
-        :return: bool, true if data set is actual, false - instead
-        """
-        now = datetime.now()
-        return self.record_data["month"] == now.month
-
-    def get_intervals(self, day, record_type):
-        reserved_intervals_in_day: set = self.record_data["records_in_day"][day]
-
-        now = datetime.now()
-        weekday_of_day = datetime(now.year, now.month, day).weekday()
-        free_intervals_in_day = Registry.AVAILABLE_RECORDS[weekday_of_day].difference(reserved_intervals_in_day)
-
-        # if free_intervals_in_day == False и дальше выходи
-        if record_type == Record.REGULAR:
-            print('continue logic')
-
     def dump_record_state(self):
         with open(self.PICKLING_FILE, 'wb') as f:
             dump(self.record_data, f)
@@ -69,8 +50,53 @@ class RecordData(object):
 
         return record_state
 
-    @classmethod
-    def _create_calendar(cls, month, year):
+    def check_data_set_actuality(self) -> bool:
+        """
+        Checks if records data set could be used
+        :return: bool, true if data set is actual, false - instead
+        """
+        now = datetime.now()
+        return self.record_data["month"] == now.month
+
+    def get_keyboard_intervals(self, day, record_type) -> set:
+        reserved_intervals_in_day: set = self.record_data["records_in_day"][day]
+
+        free_intervals_in_day = self.get_free_intervals_in_day(day, reserved_intervals_in_day)
+
+        if record_type == Record.REGULAR:
+            return free_intervals_in_day
+
+        return self.generate_double_intervals(free_intervals_in_day)
+
+    @staticmethod
+    def get_free_intervals_in_day(day: int, reserved_intervals_in_day: set) -> set:
+        now = datetime.now()
+        weekday_of_day = datetime(now.year, now.month, day).weekday()
+
+        return Registry.AVAILABLE_INTERVALS[weekday_of_day].difference(reserved_intervals_in_day)
+
+    @staticmethod
+    def generate_double_intervals(free_intervals: set) -> set:
+        """
+        Generates double intervals from ordinary intervals.
+        The idea is just to take two ordinary intervals.
+
+        :param free_intervals: set of tuples
+        :return: set of double intervals
+        """
+        if len(free_intervals) == 0:
+            return free_intervals
+
+        double_intervals = set()
+        for interval in free_intervals:
+            next_interval = (interval[1], interval[1] + 1)
+            if next_interval in free_intervals:
+                double_intervals.add((interval[0], interval[1] + 1))
+
+        return double_intervals
+
+    @staticmethod
+    def _create_calendar(month, year):
         """
         Creates a list of Tuesdays, Fridays, Saturdays of month in the form of dates.
         :return: list of all available for records days
