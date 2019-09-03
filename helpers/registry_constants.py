@@ -1,3 +1,8 @@
+from datetime import datetime, time
+
+from helpers.record_data import RecordData
+
+
 class Registry:
     GREETING_MAIN = f'Если вы хотите изменить параметры записи, то воспользуйтесь командой /change. \
                     \n\nВыберите тип записи'
@@ -29,6 +34,23 @@ class Registry:
         if is_new:
             return cls.PRIMARY_GREETING + greeting
         return cls.SECONDARY_GREETING + greeting
+
+    @staticmethod
+    def generate_available_intervals(year: int, month: int):
+        available_intervals_template = RecordData.new_data_set(year, month)
+
+        for day in available_intervals_template.keys():
+            weekday_of_day = datetime(year, month, day).weekday()
+
+            if weekday_of_day in {1, 4}:
+                intervals_range = range(9, 15)
+            elif weekday_of_day == 5:
+                intervals_range = range(12, 20)
+            else:
+                raise Exception('tmp exception') # todo temp
+
+            # todo use named tuple
+            available_intervals_template[day] = {(time(h), time(h+1)) for h in intervals_range}
 
     @classmethod
     def record_info(cls, record_type: str, patient_type: str) -> str:

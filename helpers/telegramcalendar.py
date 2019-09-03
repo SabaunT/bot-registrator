@@ -11,11 +11,13 @@ VERY BAD CODE!!!!!!!!!!
 import os
 import datetime
 import calendar
+from collections import namedtuple
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 
 from helpers.record_data import RecordData
 from helpers.registry_constants import Registry
+from apps.tf_bot.models import Record
 
 
 def create_callback_data(action, year, month, day):
@@ -42,26 +44,48 @@ def create_calendar(record_type: str, year=None, month=None):
         month = now.month
 
     # todo need refactor
-    if not os.path.exists(RecordData.PICKLING_FILE):
-        record_data_set = RecordData.new_data_set(year, month)
-        record_data_set.dump_record_state()
-    elif RecordData().check_data_set_actuality():
-        record_data_set = RecordData()
-    else:
-        record_data_set = RecordData.new_data_set(year, month)
-        record_data_set.dump_record_state()
+
+    keyboard_calendar = list()
+
+    # getting reserved intervals in current month
+    min_for_query = datetime.datetime(year, month, 1, 0, 0, 0)
+    max_for_query = datetime.datetime(year,  month + 1, 1, 0, 0, 0)
+    reserved_intervals: list[Record] = Record.objects.filter(record_end_time__range=(min_for_query, max_for_query))
+
+    if len(reserved_intervals) == 0:
+        return keyboard_calendar
+
+    PatientRecord = namedtuple('Record', ['start', 'end'])
+
+    reserved_intervals_subtrahend_sets: dict[int: set] = RecordData.new_data_set(year, month)
+    for reserved_interval in reserved_intervals:
+        interval_start_hour = reserved_interval.record_start_time.hour
+        interval_end_hour = reserved_interval.record_end_time.hour
+
+        interval_tuple = PatientRecord(interval_start_hour, interval_end_hour)
+        reserved_intervals_subtrahend_sets[reserved_interval.record_start_time.day].add(interval_tuple) # todo а тут точно нужна проверка?
+
+
+    # if not os.path.exists(RecordData.PICKLING_FILE):
+    #     record_data_set = RecordData.new_data_set(year, month)
+    #     record_data_set.dump_record_state()
+    # elif RecordData().check_data_set_actuality():
+    #     record_data_set = RecordData()
+    # else:
+    #     record_data_set = RecordData.new_data_set(year, month)
+    #     record_data_set.dump_record_state()
 
     data_ignore = create_callback_data("IGNORE", year, month, 0)
     keyboard = []
     # First row - Month and Year
     row = list()
     row.append(InlineKeyboardButton(calendar.month_name[month] + " " + str(year), callback_data=data_ignore))
-    keyboard.append(row)
+    keyboard_calendar.append(row)
     # Second row - Week Days
     row = list()
     for day in ["Tu", "Fr", "Sa"]:
         row.append(InlineKeyboardButton(day, callback_data=data_ignore))
-    keyboard.append(row)
+    keyboard_calendar.append(row)
 
     my_calendar = [
         [week[1], week[4], week[5]] for week in calendar.monthcalendar(year, month)

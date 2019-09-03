@@ -6,8 +6,8 @@ from pickle import load, dump
 
 from numpy import trim_zeros
 
-from apps.tf_bot.models import Record
-from helpers.registry_constants import Registry
+# from apps.tf_bot.models import Record
+# from helpers.registry_constants import Registry
 
 
 class RecordData(object):
@@ -26,12 +26,7 @@ class RecordData(object):
         days_for_data_set = cls._create_calendar(month, year)
         records_in_day = dict.fromkeys(days_for_data_set, set())
 
-        record_data = {
-            "month": month,
-            "records_in_day": records_in_day
-        }
-
-        return cls(record_data)
+        return records_in_day
 
     def __init__(self, record_data: dict = None):
         internal_record_state_dir = os.path.join(self.BOT_DIR, 'internal_record_state')
@@ -58,22 +53,22 @@ class RecordData(object):
         now = datetime.now()
         return self.record_data["month"] == now.month
 
-    def get_keyboard_intervals(self, day, record_type) -> set:
-        reserved_intervals_in_day: set = self.record_data["records_in_day"][day]
+    # def get_keyboard_intervals(self, day, record_type) -> set:
+    #     reserved_intervals_in_day: set = self.record_data["records_in_day"][day]
+    #
+    #     free_intervals_in_day = self.get_free_intervals_in_day(day, reserved_intervals_in_day)
+    #
+    #     if record_type == Record.REGULAR:
+    #         return free_intervals_in_day
+    #
+    #     return self.generate_double_intervals(free_intervals_in_day)
 
-        free_intervals_in_day = self.get_free_intervals_in_day(day, reserved_intervals_in_day)
-
-        if record_type == Record.REGULAR:
-            return free_intervals_in_day
-
-        return self.generate_double_intervals(free_intervals_in_day)
-
-    @staticmethod
-    def get_free_intervals_in_day(day: int, reserved_intervals_in_day: set) -> set:
-        now = datetime.now()
-        weekday_of_day = datetime(now.year, now.month, day).weekday()
-
-        return Registry.AVAILABLE_INTERVALS[weekday_of_day].difference(reserved_intervals_in_day)
+    # @staticmethod
+    # def get_free_intervals_in_day(day: int, reserved_intervals_in_day: set) -> set:
+    #     now = datetime.now()
+    #     weekday_of_day = datetime(now.year, now.month, day).weekday()
+    #
+    #     return Registry.AVAILABLE_INTERVALS[weekday_of_day].difference(reserved_intervals_in_day)
 
     @staticmethod
     def generate_double_intervals(free_intervals: set) -> set:
@@ -108,3 +103,6 @@ class RecordData(object):
         merged_my_month_calendar = list(chain.from_iterable(my_month_calendar))
         return trim_zeros(merged_my_month_calendar)
 
+
+if __name__ == '__main__':
+    print(RecordData.new_data_set(2019, 9))

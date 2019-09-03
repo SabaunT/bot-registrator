@@ -22,6 +22,7 @@ class Patient(models.Model):
         patient = cls(**kwargs)
         return patient
 
+
 class Record(models.Model):
     # todo удали enum этот
     # todo вставь констрэинт через sql
