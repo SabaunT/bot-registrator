@@ -2,14 +2,14 @@ import os
 import logging
 
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler, CallbackQueryHandler,
+from telegram.ext import (Updater, CommandHandler, RegexHandler, CallbackQueryHandler,
                           ConversationHandler)
 
 
 from apps.tf_bot.models import Patient, Record
-from helpers.registry_constants import Registry
-from helpers import telegramcalendar
-from helpers.session import TemporarySession, TemporaryData
+from apps.utils.registry_constants import Registry
+from apps.utils import telegramcalendar
+from apps.utils.session import TemporarySession, TemporaryData
 
 
 # TODO поменяй логгер
@@ -126,7 +126,12 @@ def error(bot, update, error):
 
 
 def main():
-    updater = Updater(BOT_TOKEN)
+    # todo скрой
+    REQUEST_KWARGS = {
+        'proxy_url': 'http://equohnge4fiequiem4Du:Ahphi7ahvoh6IejahPha@proxy.mixbytes.io:3128',
+        # Optional, if you need authentication:
+    }
+    updater = Updater(BOT_TOKEN, request_kwargs=REQUEST_KWARGS)
 
     dp = updater.dispatcher
 

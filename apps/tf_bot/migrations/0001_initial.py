@@ -3,7 +3,7 @@
 import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
-import helpers.validators
+import apps.utils.validators
 
 
 class Migration(migrations.Migration):
@@ -31,8 +31,8 @@ class Migration(migrations.Migration):
             name='Record',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('record_start_time', models.DateTimeField(validators=[helpers.validators.day_of_week_validator, helpers.validators.record_interval_validator])),
-                ('record_end_time', models.DateTimeField(validators=[helpers.validators.day_of_week_validator, helpers.validators.record_interval_validator])),
+                ('record_start_time', models.DateTimeField(validators=[apps.utils.validators.day_of_week_validator, apps.utils.validators.record_interval_validator])),
+                ('record_end_time', models.DateTimeField(validators=[apps.utils.validators.day_of_week_validator, apps.utils.validators.record_interval_validator])),
                 ('patient', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='tf_bot.Patient')),
             ],
             options={

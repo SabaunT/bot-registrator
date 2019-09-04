@@ -2,9 +2,11 @@ import os
 import calendar
 from datetime import datetime
 from itertools import chain
+from collections import namedtuple
 from pickle import load, dump
 
 from numpy import trim_zeros
+
 
 # from apps.tf_bot.models import Record
 # from helpers.registry_constants import Registry
@@ -19,12 +21,12 @@ class RecordData(object):
     """
 
     BOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    PICKLING_FILE = os.path.join(BOT_DIR, 'internal_record_state/record_state')
+    PICKLING_FILE = os.path.join(BOT_DIR, 'internal_record_state/../../internal_record_state/record_state')
 
     @classmethod
     def new_data_set(cls, year, month):
         days_for_data_set = cls._create_calendar(month, year)
-        records_in_day = dict.fromkeys(days_for_data_set, set())
+        records_in_day = {day: set() for day in days_for_data_set}
 
         return records_in_day
 
@@ -102,7 +104,3 @@ class RecordData(object):
 
         merged_my_month_calendar = list(chain.from_iterable(my_month_calendar))
         return trim_zeros(merged_my_month_calendar)
-
-
-if __name__ == '__main__':
-    print(RecordData.new_data_set(2019, 9))

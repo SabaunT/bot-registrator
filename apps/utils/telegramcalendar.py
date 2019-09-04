@@ -8,15 +8,15 @@ Base methods for calendar keyboard creation and processing.
 NEED MAJOR REFACTOR !!!!!!!!!!!
 VERY BAD CODE!!!!!!!!!!
 """
-import os
 import datetime
 import calendar
-from collections import namedtuple
+from pprint import pprint
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from helpers.record_data import RecordData
-from helpers.registry_constants import Registry
+from apps.utils.record_data import RecordData
+from apps.utils.registry_constants import Registry
+from apps.utils.util import PatientRecord
 from apps.tf_bot.models import Record
 
 
@@ -50,12 +50,10 @@ def create_calendar(record_type: str, year=None, month=None):
     # getting reserved intervals in current month
     min_for_query = datetime.datetime(year, month, 1, 0, 0, 0)
     max_for_query = datetime.datetime(year,  month + 1, 1, 0, 0, 0)
-    reserved_intervals: list[Record] = Record.objects.filter(record_end_time__range=(min_for_query, max_for_query))
+    reserved_intervals = Record.objects.filter(record_end_time__range=(min_for_query, max_for_query))
 
     if len(reserved_intervals) == 0:
         return keyboard_calendar
-
-    PatientRecord = namedtuple('Record', ['start', 'end'])
 
     reserved_intervals_subtrahend_sets: dict[int: set] = RecordData.new_data_set(year, month)
     for reserved_interval in reserved_intervals:
@@ -65,18 +63,7 @@ def create_calendar(record_type: str, year=None, month=None):
         interval_tuple = PatientRecord(interval_start_hour, interval_end_hour)
         reserved_intervals_subtrahend_sets[reserved_interval.record_start_time.day].add(interval_tuple) # todo а тут точно нужна проверка?
 
-
-    # if not os.path.exists(RecordData.PICKLING_FILE):
-    #     record_data_set = RecordData.new_data_set(year, month)
-    #     record_data_set.dump_record_state()
-    # elif RecordData().check_data_set_actuality():
-    #     record_data_set = RecordData()
-    # else:
-    #     record_data_set = RecordData.new_data_set(year, month)
-    #     record_data_set.dump_record_state()
-
     data_ignore = create_callback_data("IGNORE", year, month, 0)
-    keyboard = []
     # First row - Month and Year
     row = list()
     row.append(InlineKeyboardButton(calendar.month_name[month] + " " + str(year), callback_data=data_ignore))
@@ -97,18 +84,19 @@ def create_calendar(record_type: str, year=None, month=None):
             if day == 0 or day <= now.day:
                 row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
-                keyboard_intervals: set = record_data_set.get_keyboard_intervals(day, record_type)
+                available_intervals = Registry.generate_available_intervals(year, month)
+                keyboard_intervals = available_intervals[day].difference(reserved_intervals_subtrahend_sets[day])
                 if len(keyboard_intervals) != 0:
                     row.append(InlineKeyboardButton(day, callback_data=create_callback_data("DAY", year, month, day)))
-        keyboard.append(row)
+        keyboard_calendar.append(row)
 
-    for each in keyboard[2:]:
+    for each in keyboard_calendar[2:]:
         for e in each:
             print(e.text)
 
     # list_to_filter = keyboard[2:].copy()
 
-    return InlineKeyboardMarkup(keyboard)
+    return InlineKeyboardMarkup(keyboard_calendar)
 
 
 def process_calendar_selection(bot, update):
@@ -136,5 +124,3 @@ def process_calendar_selection(bot, update):
         # UNKNOWN
     return ret_data
 
-if __name__ == '__main__':
-    create_calendar(2019, 9)

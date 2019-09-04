@@ -1,7 +1,7 @@
 from django.db import models
 
 from django.core.validators import RegexValidator
-from helpers.validators import day_of_week_validator, record_interval_validator
+from apps.utils.validators import day_of_week_validator, record_interval_validator
 
 
 class Patient(models.Model):

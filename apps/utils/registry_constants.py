@@ -1,6 +1,8 @@
-from datetime import datetime, time
+from datetime import datetime
 
-from helpers.record_data import RecordData
+from apps.utils.record_data import RecordData
+from apps.utils.util import PatientRecord
+from typing import NamedTuple
 
 
 class Registry:
@@ -22,11 +24,6 @@ class Registry:
 
     END_REGISTRY = 'Стоимость любой работы сообщается ТОЛЬКО после составления плана лечения, для которого нужен комплекс диагностических мероприятий. Ни по телефону, ни при помощи чатов диагнозы не ставятся, расчет стоимости лечения не проводится (ни примерный, ни точный).'
 
-    AVAILABLE_INTERVALS = {
-        1: {(9, 10), (10, 11), (11, 12), (12, 13), (13, 14), (14, 15)},
-        4: {(9, 10), (10, 11), (11, 12), (12, 13), (13, 14), (14, 15)},
-        5: {(12, 13), (13, 14), (14, 15), (15, 16), (16, 17), (17, 18), (18, 19), (19, 20)}
-    }
 
     @classmethod
     def greeting(cls, *, is_new: bool = True) -> str:
@@ -36,7 +33,7 @@ class Registry:
         return cls.SECONDARY_GREETING + greeting
 
     @staticmethod
-    def generate_available_intervals(year: int, month: int):
+    def generate_available_intervals(year: int, month: int) -> dict:
         available_intervals_template = RecordData.new_data_set(year, month)
 
         for day in available_intervals_template.keys():
@@ -49,8 +46,9 @@ class Registry:
             else:
                 raise Exception('tmp exception') # todo temp
 
-            # todo use named tuple
-            available_intervals_template[day] = {(time(h), time(h+1)) for h in intervals_range}
+            available_intervals_template[day] = {PatientRecord(h, h+1) for h in intervals_range}
+
+        return available_intervals_template
 
     @classmethod
     def record_info(cls, record_type: str, patient_type: str) -> str:
