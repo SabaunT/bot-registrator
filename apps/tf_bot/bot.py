@@ -7,7 +7,7 @@ from telegram.ext import (Updater, CommandHandler, RegexHandler, CallbackQueryHa
 
 
 from apps.tf_bot.models import Patient, Record
-from apps.utils.registry_constants import Registry
+from apps.utils.registry_constants import RegistryManager
 from apps.utils import telegramcalendar
 from apps.utils.session import TemporarySession, TemporaryData
 
@@ -38,7 +38,7 @@ def start(bot, update):
     _, created = Patient.objects.get_or_create(telegram_id=user_id)
     current_patient_session_data.patient_type = 'primary' if created else 'secondary'
 
-    message_text = Registry.greeting(
+    message_text = RegistryManager.greeting(
         is_new=True if current_patient_session_data.patient_type == 'primary' else False
     )
 
@@ -85,7 +85,7 @@ def register(bot, update):
 
     reply_keyboard = telegramcalendar.create_calendar(current_patient.record_type)
 
-    message_reply = Registry.record_info(record_type, current_patient_type)
+    message_reply = RegistryManager.record_info(record_type, current_patient_type)
     message_reply += 'Выберите дату.'
     update.message.reply_text(message_reply, reply_markup=reply_keyboard)
 
@@ -96,7 +96,7 @@ def date(bot, update):
     is_selected, chosen_date = telegramcalendar.process_calendar_selection(bot, update)
     if is_selected:
         message_reply = 'Вы записаны на {}. '.format(chosen_date.strftime("%d/%m/%Y"))
-        # message_reply += Registry.end_registry()
+        # message_reply += RegistryManager.end_registry()
         message_reply += 'Выберите интервал записи'
 
         # todo здесь вызов доступных интервалов, а потом массовый рефактор.

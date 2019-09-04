@@ -15,7 +15,7 @@ from pprint import pprint
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from apps.utils.record_data import RecordData
-from apps.utils.registry_constants import Registry
+from apps.utils.registry_constants import RegistryManager
 from apps.utils.util import PatientRecord
 from apps.tf_bot.models import Record
 
@@ -66,6 +66,7 @@ def create_calendar(record_type: str, year=None, month=None):
             adding_intervals = [PatientRecord(interval_start_hour, interval_end_hour)]
         reserved_intervals_subtrahend_sets[reserved_interval.record_start_time.day].update(adding_intervals)
 
+    """
     data_ignore = create_callback_data("IGNORE", year, month, 0)
     # First row - Month and Year
     row = list()
@@ -76,18 +77,21 @@ def create_calendar(record_type: str, year=None, month=None):
     for day in ["Tu", "Fr", "Sa"]:
         row.append(InlineKeyboardButton(day, callback_data=data_ignore))
     keyboard_calendar.append(row)
+    """
 
+    """
     my_calendar = [
         [week[1], week[4], week[5]] for week in calendar.monthcalendar(year, month)
     ]
+    """
 
-    for week in my_calendar:
-        row = []
-        for day in week:
-            if day == 0 or day <= now.day:
-                row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
+    # for week in my_calendar:
+    #     row = []
+    #     for day in week:
+    #         if day == 0 or day <= now.day:
+    #             row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
-                available_intervals = Registry._generate_available_intervals(year, month)
+                available_intervals = RegistryManager._generate_available_intervals(year, month)
                 keyboard_intervals = available_intervals[day].difference(reserved_intervals_subtrahend_sets[day])
                 free_typed_intervals = RecordData.get_record_typed_intervals(record_type, keyboard_intervals)
                 if len(free_typed_intervals) != 0:

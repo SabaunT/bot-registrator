@@ -10,7 +10,7 @@ from numpy import trim_zeros
 
 from apps.tf_bot.models import Record
 from apps.utils.util import PatientRecord
-# from helpers.registry_constants import Registry
+# from helpers.registry_constants import RegistryManager
 
 
 class RecordData(object):
@@ -71,7 +71,7 @@ class RecordData(object):
     #     now = datetime.now()
     #     weekday_of_day = datetime(now.year, now.month, day).weekday()
     #
-    #     return Registry.AVAILABLE_INTERVALS[weekday_of_day].difference(reserved_intervals_in_day)
+    #     return RegistryManager.AVAILABLE_INTERVALS[weekday_of_day].difference(reserved_intervals_in_day)
 
     @staticmethod
     def get_record_typed_intervals(record_type, keyboard_intervals: set):

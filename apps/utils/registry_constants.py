@@ -1,14 +1,16 @@
 import calendar
 from datetime import datetime
+from itertools import chain
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from numpy import trim_zeros
 
 from apps.tf_bot.models import Record
 from apps.utils.record_data import RecordData
 from apps.utils.util import PatientRecord
 
 
-class Registry:
+class RegistryManager:
     GREETING_MAIN = f'Если вы хотите изменить параметры записи, то воспользуйтесь командой /change. \
                     \n\nВыберите тип записи'
 
@@ -51,16 +53,45 @@ class Registry:
         :return: Returns the InlineKeyboardMarkup object with the calendar.
         """
         now = datetime.now()
+
+        # First two rows in telegram calendar object
+        year_n_month_row, week_days_row = cls._create_support_rows(now)
+
+        # days_row = cls._create_available_days_row(record_type, now)
+
+    @classmethod
+    def _create_available_days_row(cls, record_type: str, now: datetime.now()):
+        """
+        Может вернуть пустой массив, что означает, что сообщение должно быть соответствующим
+        :param record_type:
+        :param year:
+        :param month:
+        :return:
+        """
+        year = now.year
+        month = now.month
+        current_day = now.day
+
+        # for buttons with no actions
+        data_ignore = cls._create_callback_data("IGNORE", year, month, 0)
+
+        my_base_calendar: list = cls._create_base_calendar(year, month)
+        for week in my_base_calendar:
+            days_row = list()
+            for day in week:
+                if day == 0 or day <= current_day:
+                    days_row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
+                else:
+                    """
+                    Добавь тот day, который имеет свободные интервалы исходя из предоставленного типа
+                    """
+
+    @classmethod
+    def _create_support_rows(cls, now: datetime.now()) -> (list, list):
         year = now.year
         month = now.month
 
-        # First two rows in telegram calendar object
-        year_n_month_row, week_days_row = cls._create_support_rows(year, month)
-
-        #days_row = cls._get_available_days_row()
-
-    @classmethod
-    def _create_support_rows(cls, year: int, month: int) -> (list, list):
+        # for buttons with no actions
         data_ignore = cls._create_callback_data("IGNORE", year, month, 0)
 
         year_month_row = list()
@@ -75,6 +106,31 @@ class Registry:
             week_days_row.append(InlineKeyboardButton(day, callback_data=data_ignore))
 
         return year_month_row, week_days_row
+
+    @classmethod
+    def _generate_available_intervals(cls, year: int, month: int) -> dict:
+        available_intervals_template = cls._new_data_set(year, month)
+
+        for day in available_intervals_template.keys():
+            weekday_of_day = datetime(year, month, day).weekday()
+
+            if weekday_of_day in {1, 4}:
+                intervals_range = range(9, 15)
+            elif weekday_of_day == 5:
+                intervals_range = range(12, 20)
+            else:
+                raise Exception('tmp exception') # todo temp
+
+            available_intervals_template[day] = {PatientRecord(h, h+1) for h in intervals_range}
+
+        return available_intervals_template
+
+    @classmethod
+    def _new_data_set(cls, year, month):
+        days_for_data_set = cls._trimmed_flat_calendar(year, month)
+        records_in_day = {day: set() for day in days_for_data_set}
+
+        return records_in_day
 
     @staticmethod
     def _create_callback_data(action: str, year: int, month: int, day: int):
@@ -92,20 +148,24 @@ class Registry:
         """
         return data.split(";")
 
+    @classmethod
+    def _trimmed_flat_calendar(cls, year: int, month: int):
+        """
+        Calendar without zeroes
+        """
+        base_calendar = cls._create_base_calendar(year, month)
+        merged_base_calendar = list(chain.from_iterable(base_calendar))
+        return trim_zeros(merged_base_calendar)
+
     @staticmethod
-    def _generate_available_intervals(year: int, month: int) -> dict:
-        available_intervals_template = RecordData.new_data_set(year, month)
+    def _create_base_calendar(year: int, month: int):
+        """
+        Creates a list of Tuesdays, Fridays, Saturdays of month in the form of dates.
+        Returning list contains zeroes
+        :return: [[int]] - list of lists containing ints, which are dates
+        """
+        my_month_calendar = [
+            [week[1], week[4], week[5]] for week in calendar.monthcalendar(year, month)
+        ]
 
-        for day in available_intervals_template.keys():
-            weekday_of_day = datetime(year, month, day).weekday()
-
-            if weekday_of_day in {1, 4}:
-                intervals_range = range(9, 15)
-            elif weekday_of_day == 5:
-                intervals_range = range(12, 20)
-            else:
-                raise Exception('tmp exception') # todo temp
-
-            available_intervals_template[day] = {PatientRecord(h, h+1) for h in intervals_range}
-
-        return available_intervals_template
+        return my_month_calendar
