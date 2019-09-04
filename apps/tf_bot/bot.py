@@ -99,6 +99,7 @@ def date(bot, update):
         # message_reply += Registry.end_registry()
         message_reply += 'Выберите интервал записи'
 
+        # todo здесь вызов доступных интервалов, а потом массовый рефактор.
         reply_intervals = [['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']]
         bot.send_message(
             chat_id=update.callback_query.from_user.id,

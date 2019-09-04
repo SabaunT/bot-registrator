@@ -87,7 +87,7 @@ def create_calendar(record_type: str, year=None, month=None):
             if day == 0 or day <= now.day:
                 row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
-                available_intervals = Registry.generate_available_intervals(year, month)
+                available_intervals = Registry._generate_available_intervals(year, month)
                 keyboard_intervals = available_intervals[day].difference(reserved_intervals_subtrahend_sets[day])
                 free_typed_intervals = RecordData.get_record_typed_intervals(record_type, keyboard_intervals)
                 if len(free_typed_intervals) != 0:
