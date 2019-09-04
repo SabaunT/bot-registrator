@@ -34,6 +34,7 @@ def start(bot, update):
 
     print(user_id)
 
+    # todo атомарно
     _, created = Patient.objects.get_or_create(telegram_id=user_id)
     current_patient_session_data.patient_type = 'primary' if created else 'secondary'
 

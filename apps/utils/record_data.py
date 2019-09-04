@@ -8,7 +8,8 @@ from pickle import load, dump
 from numpy import trim_zeros
 
 
-# from apps.tf_bot.models import Record
+from apps.tf_bot.models import Record
+from apps.utils.util import PatientRecord
 # from helpers.registry_constants import Registry
 
 
@@ -73,6 +74,13 @@ class RecordData(object):
     #     return Registry.AVAILABLE_INTERVALS[weekday_of_day].difference(reserved_intervals_in_day)
 
     @staticmethod
+    def get_record_typed_intervals(record_type, keyboard_intervals: set):
+        if record_type == Record.REGULAR:
+            return keyboard_intervals
+
+        return RecordData.generate_double_intervals(keyboard_intervals)
+
+    @staticmethod
     def generate_double_intervals(free_intervals: set) -> set:
         """
         Generates double intervals from ordinary intervals.
@@ -86,9 +94,9 @@ class RecordData(object):
 
         double_intervals = set()
         for interval in free_intervals:
-            next_interval = (interval[1], interval[1] + 1)
+            next_interval = PatientRecord(interval.end, interval.end + 1)
             if next_interval in free_intervals:
-                double_intervals.add((interval[0], interval[1] + 1))
+                double_intervals.add(PatientRecord(interval.start, interval.end + 1))
 
         return double_intervals
 

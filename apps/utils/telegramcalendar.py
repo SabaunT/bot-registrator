@@ -60,8 +60,11 @@ def create_calendar(record_type: str, year=None, month=None):
         interval_start_hour = reserved_interval.record_start_time.hour
         interval_end_hour = reserved_interval.record_end_time.hour
 
-        interval_tuple = PatientRecord(interval_start_hour, interval_end_hour)
-        reserved_intervals_subtrahend_sets[reserved_interval.record_start_time.day].add(interval_tuple) # todo а тут точно нужна проверка?
+        if interval_end_hour - interval_start_hour == 2:
+            adding_intervals = [PatientRecord(interval_start_hour + i, interval_end_hour + i) for i in range(2)]
+        else:
+            adding_intervals = [PatientRecord(interval_start_hour, interval_end_hour)]
+        reserved_intervals_subtrahend_sets[reserved_interval.record_start_time.day].update(adding_intervals)
 
     data_ignore = create_callback_data("IGNORE", year, month, 0)
     # First row - Month and Year
@@ -86,7 +89,8 @@ def create_calendar(record_type: str, year=None, month=None):
             else:
                 available_intervals = Registry.generate_available_intervals(year, month)
                 keyboard_intervals = available_intervals[day].difference(reserved_intervals_subtrahend_sets[day])
-                if len(keyboard_intervals) != 0:
+                free_typed_intervals = RecordData.get_record_typed_intervals(record_type, keyboard_intervals)
+                if len(free_typed_intervals) != 0:
                     row.append(InlineKeyboardButton(day, callback_data=create_callback_data("DAY", year, month, day)))
         keyboard_calendar.append(row)
 
