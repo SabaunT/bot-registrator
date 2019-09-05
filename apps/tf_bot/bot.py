@@ -96,7 +96,6 @@ def date(bot, update):
     is_selected, chosen_date = telegramcalendar.process_calendar_selection(bot, update)
     if is_selected:
         message_reply = 'Вы записаны на {}. '.format(chosen_date.strftime("%d/%m/%Y"))
-        # message_reply += RegistryManager.end_registry()
         message_reply += 'Выберите интервал записи'
 
         # todo здесь вызов доступных интервалов, а потом массовый рефактор.

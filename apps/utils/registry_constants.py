@@ -81,6 +81,7 @@ class RegistryManager:
         data_ignore = cls._create_callback_data("IGNORE", year, month, 0)
 
         available_intervals = cls._generate_available_intervals(year, month)
+        reserved_intervals = cls._get_reserved_intervals(year, month)
 
         keyboard_days = list()
         my_base_calendar: list = cls._create_base_calendar(year, month)
@@ -92,6 +93,7 @@ class RegistryManager:
                 else:
                     free_typed_intervals_in_day = cls._get_keyboard_typed_intervals_in_day(
                         available_intervals,
+                        reserved_intervals,
                         record_type,
                         day
                     )
@@ -102,6 +104,31 @@ class RegistryManager:
             keyboard_days.append(days_row)
 
         return keyboard_days
+
+    @classmethod
+    def _get_reserved_intervals(cls, year, month):
+        min_for_query = datetime(year, month, 1, 0, 0, 0)
+        max_for_query = datetime(year, month + 1, 1, 0, 0, 0)
+
+        reserved_intervals = Record.objects.filter(record_end_time__range=(min_for_query, max_for_query))
+
+        return cls._restructure_reserved_intervals(year, month, reserved_intervals)
+
+    @classmethod
+    def _restructure_reserved_intervals(cls, year, month, reserved_intervals):
+        reserved_intervals_template_set = cls._new_data_set(year, month)
+
+        for reserved_interval in reserved_intervals:
+            interval_start_hour = reserved_interval.record_start_time.hour
+            interval_end_hour = reserved_interval.record_end_time.hour
+
+            if interval_end_hour - interval_start_hour == 2:
+                adding_intervals = [PatientRecord(interval_start_hour + i, interval_end_hour + i) for i in range(2)]
+            else:
+                adding_intervals = [PatientRecord(interval_start_hour, interval_end_hour)]
+            reserved_intervals_template_set[reserved_interval.record_start_time.day].update(adding_intervals)
+
+        return reserved_intervals_template_set
 
     @classmethod
     def _create_support_rows(cls, now: datetime.now()) -> [list, list]:
@@ -143,8 +170,10 @@ class RegistryManager:
         return available_intervals_template
 
     @classmethod
-    def _get_keyboard_typed_intervals_in_day(cls, available_intervals: {int: NamedTuple}, record_type: str, day: int):
-        keyboard_intervals_in_day = cls._get_keyboard_intervals_in_day(available_intervals, day)
+    def _get_keyboard_typed_intervals_in_day(
+            cls, available_intervals: {int: NamedTuple}, reserved_interval, record_type: str, day: int
+    ):
+        keyboard_intervals_in_day = cls._get_keyboard_intervals_in_day(available_intervals, reserved_interval, day)
 
         if record_type == Record.REGULAR:
             return keyboard_intervals_in_day
@@ -159,8 +188,8 @@ class RegistryManager:
         return records_in_day
 
     @staticmethod
-    def _get_keyboard_intervals_in_day(available_intervals, day: int):
-        return available_intervals[day].difference(set()) # < - reserved intervals
+    def _get_keyboard_intervals_in_day(available_intervals, reserved_interval, day: int):
+        return available_intervals[day].difference(reserved_interval[day])
 
     @staticmethod
     def _generate_double_intervals_in_day(keyboard_intervals_in_day):
@@ -168,7 +197,7 @@ class RegistryManager:
         Generates double intervals from ordinary intervals.
         The idea is just to take two ordinary intervals.
 
-        :param keyboard_intervals: set of tuples
+        :param keyboard_intervals_in_day: set of tuples
         :return: set of double intervals
         """
         if len(keyboard_intervals_in_day) == 0:
