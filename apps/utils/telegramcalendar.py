@@ -85,11 +85,11 @@ def create_calendar(record_type: str, year=None, month=None):
     ]
     """
 
-    # for week in my_calendar:
-    #     row = []
-    #     for day in week:
-    #         if day == 0 or day <= now.day:
-    #             row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
+    for week in my_calendar:
+        row = []
+        for day in week:
+            if day == 0 or day <= now.day:
+                row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
                 available_intervals = RegistryManager._generate_available_intervals(year, month)
                 keyboard_intervals = available_intervals[day].difference(reserved_intervals_subtrahend_sets[day])

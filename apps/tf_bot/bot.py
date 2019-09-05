@@ -1,7 +1,7 @@
 import os
 import logging
 
-from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
+from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup)
 from telegram.ext import (Updater, CommandHandler, RegexHandler, CallbackQueryHandler,
                           ConversationHandler)
 
@@ -83,10 +83,10 @@ def register(bot, update):
     current_patient_type = current_patient.patient_type
     current_patient.record_type = Record.REGULAR if record_type == 'Обычная' else Record.EXTENDED
 
-    reply_keyboard = telegramcalendar.create_calendar(current_patient.record_type)
-
+    reply_keyboard = RegistryManager.generate_calendar(current_patient.record_type)
     message_reply = RegistryManager.record_info(record_type, current_patient_type)
     message_reply += 'Выберите дату.'
+
     update.message.reply_text(message_reply, reply_markup=reply_keyboard)
 
     return DATE
