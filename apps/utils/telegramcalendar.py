@@ -9,103 +9,13 @@ NEED MAJOR REFACTOR !!!!!!!!!!!
 VERY BAD CODE!!!!!!!!!!
 """
 import datetime
-import calendar
-from pprint import pprint
-
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-from apps.utils.record_data import RecordData
-from apps.utils.registry_constants import RegistryManager
-from apps.utils.util import PatientRecord
-from apps.tf_bot.models import Record
 
 
-def create_callback_data(action, year, month, day):
-    """ Create the callback data associated to each button"""
-    return ";".join([action, str(year), str(month), str(day)])
-
-
-def separate_callback_data(data):
-    """ Separate the callback data"""
+def separate_callback_data(data: str) -> [str]:
+    """
+    Separate the callback data
+    """
     return data.split(";")
-
-
-def create_calendar(record_type: str, year=None, month=None):
-    """
-    Create an inline keyboard with the provided year and month
-    :param int year: Year to use in the calendar, if None the current year is used.
-    :param int month: Month to use in the calendar, if None the current month is used.
-    :return: Returns the InlineKeyboardMarkup object with the calendar.
-    """
-    now = datetime.datetime.now()
-    if year is None:
-        year = now.year
-    if month is None:
-        month = now.month
-
-    # todo need refactor
-
-    keyboard_calendar = list()
-
-    # getting reserved intervals in current month
-    min_for_query = datetime.datetime(year, month, 1, 0, 0, 0)
-    max_for_query = datetime.datetime(year,  month + 1, 1, 0, 0, 0)
-    reserved_intervals = Record.objects.filter(record_end_time__range=(min_for_query, max_for_query))
-
-    if len(reserved_intervals) == 0:
-        return keyboard_calendar
-
-    reserved_intervals_subtrahend_sets: dict[int: set] = RecordData.new_data_set(year, month)
-    for reserved_interval in reserved_intervals:
-        interval_start_hour = reserved_interval.record_start_time.hour
-        interval_end_hour = reserved_interval.record_end_time.hour
-
-        if interval_end_hour - interval_start_hour == 2:
-            adding_intervals = [PatientRecord(interval_start_hour + i, interval_end_hour + i) for i in range(2)]
-        else:
-            adding_intervals = [PatientRecord(interval_start_hour, interval_end_hour)]
-        reserved_intervals_subtrahend_sets[reserved_interval.record_start_time.day].update(adding_intervals)
-
-    """
-    data_ignore = create_callback_data("IGNORE", year, month, 0)
-    # First row - Month and Year
-    row = list()
-    row.append(InlineKeyboardButton(calendar.month_name[month] + " " + str(year), callback_data=data_ignore))
-    keyboard_calendar.append(row)
-    # Second row - Week Days
-    row = list()
-    for day in ["Tu", "Fr", "Sa"]:
-        row.append(InlineKeyboardButton(day, callback_data=data_ignore))
-    keyboard_calendar.append(row)
-    """
-
-    """
-    my_calendar = [
-        [week[1], week[4], week[5]] for week in calendar.monthcalendar(year, month)
-    ]
-    """
-
-    for week in my_calendar:
-        row = []
-        for day in week:
-            if day == 0 or day <= now.day:
-                row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
-            else:
-                available_intervals = RegistryManager._generate_available_intervals(year, month)
-                keyboard_intervals = available_intervals[day].difference(reserved_intervals_subtrahend_sets[day])
-                free_typed_intervals = RecordData.get_record_typed_intervals(record_type, keyboard_intervals)
-                if len(free_typed_intervals) != 0:
-                    row.append(InlineKeyboardButton(day, callback_data=create_callback_data("DAY", year, month, day)))
-        keyboard_calendar.append(row)
-
-    for each in keyboard_calendar[2:]:
-        for e in each:
-            print(e.text)
-
-    # list_to_filter = keyboard[2:].copy()
-
-    return InlineKeyboardMarkup(keyboard_calendar)
-
 
 def process_calendar_selection(bot, update):
     """

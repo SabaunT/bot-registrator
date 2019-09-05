@@ -7,7 +7,6 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from numpy import trim_zeros
 
 from apps.tf_bot.models import Record
-from apps.utils.record_data import RecordData
 from apps.utils.util import PatientRecord, extend_lists
 
 
