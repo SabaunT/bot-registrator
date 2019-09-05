@@ -113,7 +113,7 @@ class RegistryManager:
                 if day == 0 or day <= current_day:
                     days_row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
                 else:
-                    free_typed_intervals_in_day = cls._get_keyboard_typed_intervals_in_day(
+                    free_typed_intervals_in_day = cls.get_keyboard_typed_intervals_in_day(
                         available_intervals,
                         reserved_intervals,
                         record_type,
@@ -126,15 +126,6 @@ class RegistryManager:
             keyboard_days.append(days_row)
 
         return keyboard_days
-
-    @classmethod
-    def get_reserved_intervals(cls, year, month):
-        min_for_query = datetime(year, month, 1, 0, 0, 0)
-        max_for_query = datetime(year, month + 1, 1, 0, 0, 0)
-
-        reserved_intervals = Record.objects.filter(record_end_time__range=(min_for_query, max_for_query))
-
-        return cls._restructure_reserved_intervals(year, month, reserved_intervals)
 
     @classmethod
     def _restructure_reserved_intervals(cls, year, month, reserved_intervals):
@@ -174,10 +165,10 @@ class RegistryManager:
         return [year_month_row, week_days_row]
 
     @classmethod
-    def _get_keyboard_typed_intervals_in_day(
+    def get_keyboard_typed_intervals_in_day(
             cls, available_intervals: {int: NamedTuple}, reserved_interval, record_type: str, day: int
     ):
-        keyboard_intervals_in_day = cls.get_keyboard_intervals_in_day(available_intervals, reserved_interval, day)
+        keyboard_intervals_in_day = cls._get_keyboard_intervals_in_day(available_intervals, reserved_interval, day)
 
         if record_type == Record.REGULAR:
             return keyboard_intervals_in_day
@@ -192,7 +183,7 @@ class RegistryManager:
         return records_in_day
 
     @staticmethod
-    def get_keyboard_intervals_in_day(available_intervals, reserved_interval, day: int):
+    def _get_keyboard_intervals_in_day(available_intervals, reserved_interval, day: int):
         return available_intervals[day].difference(reserved_interval[day])
 
     @staticmethod

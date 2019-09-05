@@ -45,9 +45,10 @@ def process_calendar_selection(bot, update, record_type: str):
                               chat_id=query.message.chat_id,
                               message_id=query.message.message_id
                               )
-        free_intervals_in_day = RegistryManager.get_keyboard_intervals_in_day(
+        free_intervals_in_day = RegistryManager.get_keyboard_typed_intervals_in_day(
             available_intervals,
             reserved_intervals,
+            record_type,
             int(day)
         )
         ret_array = list()
