@@ -29,7 +29,6 @@ class RegistryManager:
 
     END_REGISTRY = 'Стоимость любой работы сообщается ТОЛЬКО после составления плана лечения, для которого нужен комплекс диагностических мероприятий. Ни по телефону, ни при помощи чатов диагнозы не ставятся, расчет стоимости лечения не проводится (ни примерный, ни точный).'
 
-
     @classmethod
     def greeting(cls, *, is_new: bool = True) -> str:
         greeting = cls.GREETING_MAIN
@@ -62,14 +61,38 @@ class RegistryManager:
 
         return InlineKeyboardMarkup(extend_lists(formed_calendar, year_and_weekdays_rows, days_rows))
 
+    @classmethod
+    def generate_available_intervals(cls, year: int, month: int) -> dict:
+        available_intervals_template = cls._new_data_set(year, month)
+
+        for day in available_intervals_template.keys():
+            weekday_of_day = datetime(year, month, day).weekday()
+
+            if weekday_of_day in {1, 4}:
+                intervals_range = range(9, 15)
+            elif weekday_of_day == 5:
+                intervals_range = range(12, 20)
+            else:
+                raise Exception('tmp exception') # todo temp
+
+            available_intervals_template[day] = {PatientRecord(h, h+1) for h in intervals_range}
+
+        return available_intervals_template
+
+    @classmethod
+    def get_reserved_intervals(cls, year, month):
+        min_for_query = datetime(year, month, 1, 0, 0, 0)
+        max_for_query = datetime(year, month + 1, 1, 0, 0, 0)
+
+        reserved_intervals = Record.objects.filter(record_end_time__range=(min_for_query, max_for_query))
+
+        return cls._restructure_reserved_intervals(year, month, reserved_intervals)
 
     @classmethod
     def _create_available_days_row(cls, record_type: str, now: datetime.now()):
         """
         Может вернуть пустой массив, что означает, что сообщение должно быть соответствующим
         :param record_type:
-        :param year:
-        :param month:
         :return:
         """
         year = now.year
@@ -79,8 +102,8 @@ class RegistryManager:
         # for buttons with no actions
         data_ignore = cls._create_callback_data("IGNORE", year, month, 0)
 
-        available_intervals = cls._generate_available_intervals(year, month)
-        reserved_intervals = cls._get_reserved_intervals(year, month)
+        available_intervals = cls.generate_available_intervals(year, month)
+        reserved_intervals = cls.get_reserved_intervals(year, month)
 
         keyboard_days = list()
         my_base_calendar: list = cls._create_base_calendar(year, month)
@@ -105,7 +128,7 @@ class RegistryManager:
         return keyboard_days
 
     @classmethod
-    def _get_reserved_intervals(cls, year, month):
+    def get_reserved_intervals(cls, year, month):
         min_for_query = datetime(year, month, 1, 0, 0, 0)
         max_for_query = datetime(year, month + 1, 1, 0, 0, 0)
 
@@ -151,28 +174,10 @@ class RegistryManager:
         return [year_month_row, week_days_row]
 
     @classmethod
-    def _generate_available_intervals(cls, year: int, month: int) -> dict:
-        available_intervals_template = cls._new_data_set(year, month)
-
-        for day in available_intervals_template.keys():
-            weekday_of_day = datetime(year, month, day).weekday()
-
-            if weekday_of_day in {1, 4}:
-                intervals_range = range(9, 15)
-            elif weekday_of_day == 5:
-                intervals_range = range(12, 20)
-            else:
-                raise Exception('tmp exception') # todo temp
-
-            available_intervals_template[day] = {PatientRecord(h, h+1) for h in intervals_range}
-
-        return available_intervals_template
-
-    @classmethod
     def _get_keyboard_typed_intervals_in_day(
             cls, available_intervals: {int: NamedTuple}, reserved_interval, record_type: str, day: int
     ):
-        keyboard_intervals_in_day = cls._get_keyboard_intervals_in_day(available_intervals, reserved_interval, day)
+        keyboard_intervals_in_day = cls.get_keyboard_intervals_in_day(available_intervals, reserved_interval, day)
 
         if record_type == Record.REGULAR:
             return keyboard_intervals_in_day
@@ -187,7 +192,7 @@ class RegistryManager:
         return records_in_day
 
     @staticmethod
-    def _get_keyboard_intervals_in_day(available_intervals, reserved_interval, day: int):
+    def get_keyboard_intervals_in_day(available_intervals, reserved_interval, day: int):
         return available_intervals[day].difference(reserved_interval[day])
 
     @staticmethod

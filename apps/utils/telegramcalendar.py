@@ -9,6 +9,7 @@ NEED MAJOR REFACTOR !!!!!!!!!!!
 VERY BAD CODE!!!!!!!!!!
 """
 import datetime
+from apps.utils.registry_constants import RegistryManager
 
 
 def separate_callback_data(data: str) -> [str]:
@@ -17,7 +18,8 @@ def separate_callback_data(data: str) -> [str]:
     """
     return data.split(";")
 
-def process_calendar_selection(bot, update):
+
+def process_calendar_selection(bot, update, record_type: str):
     """
     Process the callback_query. This method generates a new calendar if forward or
     backward is pressed. This method should be called inside a CallbackQueryHandler.
@@ -26,6 +28,13 @@ def process_calendar_selection(bot, update):
     :return: Returns a tuple (Boolean,datetime.datetime), indicating if a date is selected
                 and returning the date if so.
     """
+    now = datetime.datetime.now()
+    year = now.year
+    month = now.month
+
+    available_intervals = RegistryManager.generate_available_intervals(year, month)
+    reserved_intervals = RegistryManager.get_reserved_intervals(year, month)
+
     ret_data = (False, None)
     query = update.callback_query
     (action, year, month, day) = separate_callback_data(query.data)
@@ -36,7 +45,15 @@ def process_calendar_selection(bot, update):
                               chat_id=query.message.chat_id,
                               message_id=query.message.message_id
                               )
-        ret_data = True, datetime.datetime(int(year), int(month), int(day))
+        free_intervals_in_day = RegistryManager.get_keyboard_intervals_in_day(
+            available_intervals,
+            reserved_intervals,
+            int(day)
+        )
+        ret_array = list()
+        for interval in free_intervals_in_day:
+            ret_array.append(f'{interval.start}-{interval.end}')
+        ret_data = True, datetime.datetime(int(year), int(month), int(day)), sorted(ret_array)
     else:
         bot.answer_callback_query(callback_query_id=query.id, text="Something went wrong!")
         # UNKNOWN

@@ -93,13 +93,15 @@ def register(bot, update):
 
 
 def date(bot, update):
-    is_selected, chosen_date = telegramcalendar.process_calendar_selection(bot, update)
+    user_id = update.effective_user.id
+    current_patient: TemporaryData = session_storage.get(user_id)
+    is_selected, chosen_date, days_array = telegramcalendar.process_calendar_selection(bot, update, current_patient.record_type)
     if is_selected:
         message_reply = 'Вы записаны на {}. '.format(chosen_date.strftime("%d/%m/%Y"))
         message_reply += 'Выберите интервал записи'
 
         # todo здесь вызов доступных интервалов, а потом массовый рефактор.
-        reply_intervals = [['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']]
+        reply_intervals = [days_array]
         bot.send_message(
             chat_id=update.callback_query.from_user.id,
             text=message_reply,
