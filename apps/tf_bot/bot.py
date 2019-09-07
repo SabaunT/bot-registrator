@@ -2,7 +2,7 @@ import os
 import logging
 
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup)
-from telegram.ext import (Updater, CommandHandler, RegexHandler, CallbackQueryHandler,
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler,
                           ConversationHandler)
 
 
@@ -25,7 +25,7 @@ REGISTER, DATE, INTERVAL = range(3)
 session_storage = TemporarySession()
 
 
-def start(bot, update):
+def start(update, context):
     # todo добавь проверку того, что человек уже имеет АКТУАЛЬНУЮ запись
     user_id = update.message.chat.id
     reply_keyboard = [['Обычная', 'Расширенная']]
@@ -72,7 +72,7 @@ TODO:
 7/ Разобраться с работой логгера и определиться как лучше логгировать
 8/ Выкатить в прод
 '''
-def register(bot, update):
+def register(update, context):
     """
     record_type - Обычная или Расширенная
     """
@@ -92,17 +92,16 @@ def register(bot, update):
     return DATE
 
 
-def date(bot, update):
+def date(update, context):
     user_id = update.effective_user.id
     current_patient: TemporaryData = session_storage.get(user_id)
-    is_selected, chosen_date, days_array = telegramcalendar.process_calendar_selection(bot, update, current_patient.record_type)
+    is_selected, chosen_date, days_array = telegramcalendar.process_calendar_selection(context.bot, update, current_patient.record_type)
     if is_selected:
         message_reply = 'Вы записаны на {}. '.format(chosen_date.strftime("%d/%m/%Y"))
         message_reply += 'Выберите интервал записи'
 
-        # todo здесь вызов доступных интервалов, а потом массовый рефактор.
         reply_intervals = [days_array]
-        bot.send_message(
+        context.bot.send_message(
             chat_id=update.callback_query.from_user.id,
             text=message_reply,
             reply_markup=ReplyKeyboardMarkup(reply_intervals, one_time_keyboard=True)
@@ -110,11 +109,11 @@ def date(bot, update):
         return INTERVAL
 
 
-def time_interval(bot, update):
+def time_interval(update, context):
     return ConversationHandler.END
 
 
-def cancel(bot, update):
+def cancel(update, context):
     user = update.message.from_user
     logger.info("User %s canceled the conversation.", user.first_name)
     update.message.reply_text('Здоровья Вам! Если что, обязательно обращайтесь.',
@@ -123,9 +122,9 @@ def cancel(bot, update):
     return ConversationHandler.END
 
 
-def error(bot, update, error):
+def error(update, context):
     """Log Errors caused by Updates."""
-    logger.warning('Update "%s" caused error "%s"', update, error)
+    logger.warning('Update "%s" caused error "%s"', update, context.error)
 
 
 def main():
@@ -134,7 +133,7 @@ def main():
         'proxy_url': 'http://equohnge4fiequiem4Du:Ahphi7ahvoh6IejahPha@proxy.mixbytes.io:3128',
         # Optional, if you need authentication:
     }
-    updater = Updater(BOT_TOKEN, request_kwargs=REQUEST_KWARGS)
+    updater = Updater(BOT_TOKEN, request_kwargs=REQUEST_KWARGS, use_context=True)
 
     dp = updater.dispatcher
 
@@ -142,7 +141,7 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            REGISTER: [RegexHandler('^(Обычная|Расширенная)$', register)],
+            REGISTER: [MessageHandler(Filters.regex('^(Обычная|Расширенная)$'), register)],
 
             DATE: [CallbackQueryHandler(date)],
 
