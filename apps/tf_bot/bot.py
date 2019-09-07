@@ -20,31 +20,33 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 assert BOT_TOKEN
 
-REGISTER, DATE, INTERVAL = range(3)
-
-session_storage = TemporarySession()
+REGISTER, RECORD, DATE, INTERVAL = range(4)
 
 
 def start(update, context):
     # todo добавь проверку того, что человек уже имеет АКТУАЛЬНУЮ запись
     user_id = update.message.chat.id
-    reply_keyboard = [['Обычная', 'Расширенная']]
-
-    current_patient_session_data: TemporaryData = session_storage.add_user(user_id)
 
     print(user_id)
 
-    # todo атомарно
     _, created = Patient.objects.get_or_create(telegram_id=user_id)
-    current_patient_session_data.patient_type = 'primary' if created else 'secondary'
+    context.user_data['patient_type'] = 'primary' if created else 'secondary'
 
-    message_text = RegistryManager.greeting(
-        is_new=True if current_patient_session_data.patient_type == 'primary' else False
+    update.message.reply_text(
+        RegistryManager.greeting(is_new=created),
+        reply_markup=None if created else ReplyKeyboardMarkup(RegistryManager.REPLY_RECORD_TYPE, one_time_keyboard=True)
     )
 
-    update.message.reply_text(message_text, reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-    return REGISTER
+    return REGISTER if created else RECORD
 
+
+def register(update, context):
+    user_response = update.message.text
+    """
+    1. form_patient_fields() -> подготовь user_response в объект, пригодный к 
+    сохранению в context.user_data
+    """
+    return RECORD
 
 def _change_records_actuality(user_id: int):
     '''
@@ -72,19 +74,16 @@ TODO:
 7/ Разобраться с работой логгера и определиться как лучше логгировать
 8/ Выкатить в прод
 '''
-def register(update, context):
+def record(update, context):
     """
     record_type - Обычная или Расширенная
     """
-    user_id = update.message.chat.id
     record_type = update.message.text
 
-    current_patient: TemporaryData = session_storage.get(user_id)
-    current_patient_type = current_patient.patient_type
-    current_patient.record_type = Record.REGULAR if record_type == 'Обычная' else Record.EXTENDED
+    context.user_data['record_type'] = Record.REGULAR if record_type == 'Обычная' else Record.EXTENDED
 
-    reply_keyboard = RegistryManager.generate_calendar(current_patient.record_type)
-    message_reply = RegistryManager.record_info(record_type, current_patient_type)
+    reply_keyboard = RegistryManager.generate_calendar(Record.REGULAR)
+    message_reply = RegistryManager.record_info(record_type, context.user_data['patient_type'])
     message_reply += 'Выберите дату.'
 
     update.message.reply_text(message_reply, reply_markup=reply_keyboard)
@@ -93,9 +92,11 @@ def register(update, context):
 
 
 def date(update, context):
-    user_id = update.effective_user.id
-    current_patient: TemporaryData = session_storage.get(user_id)
-    is_selected, chosen_date, days_array = telegramcalendar.process_calendar_selection(context.bot, update, current_patient.record_type)
+    is_selected, chosen_date, days_array = telegramcalendar.process_calendar_selection(
+        context.bot,
+        update,
+        context.user_data['record_type']
+    )
     if is_selected:
         message_reply = 'Вы записаны на {}. '.format(chosen_date.strftime("%d/%m/%Y"))
         message_reply += 'Выберите интервал записи'
@@ -110,6 +111,7 @@ def date(update, context):
 
 
 def time_interval(update, context):
+    print(update.message.text)
     return ConversationHandler.END
 
 
@@ -141,11 +143,12 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            REGISTER: [MessageHandler(Filters.regex('^(Обычная|Расширенная)$'), register)],
+            REGISTER: [MessageHandler(Filters.text, register)],
+            RECORD: [MessageHandler(Filters.regex('^(Обычная|Расширенная)$'), record)],
 
             DATE: [CallbackQueryHandler(date)],
 
-            INTERVAL: []
+            INTERVAL: [MessageHandler(Filters.text, time_interval)]
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]
