@@ -1,6 +1,9 @@
 from django.db import models
 
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+from dr_tf_bot.exceptions import InternalTelegramError
+
 from apps.utils.validators import day_of_week_validator, record_interval_validator
 
 
@@ -22,16 +25,22 @@ class Patient(models.Model):
         patient = cls(**kwargs)
         return patient
 
+    def save_patient_fields(self, patient_fields):
+        fields = ['last_name', 'first_name', 'phone_number']
+        try:
+            for i in range(3):
+                key = fields[i]
+                self.__dict__[key] = patient_fields[i]
+
+            self.full_clean()
+            self.save()
+        except ValidationError as e:
+            raise InternalTelegramError('LOL') from e
+
 
 class Record(models.Model):
-    # todo удали enum этот
-    # todo вставь констрэинт через sql
     REGULAR = 'Regular'
     EXTENDED = 'Extended'
-    APPOINTMENTS = (
-        (REGULAR, 'обычная запись'),
-        (EXTENDED, 'расширенная запись')
-    )
 
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT)
     record_start_time = models.DateTimeField(validators=[day_of_week_validator, record_interval_validator])
@@ -45,3 +54,16 @@ class Record(models.Model):
     def create(cls, **kwargs):
         record = cls(**kwargs)
         return record
+
+    def save(self, *args, **kwargs):
+        try:
+            self._validate_record_time_logic()
+            self.full_clean()
+        except ValidationError as e:
+            raise InternalTelegramError('LOL') from e
+        
+        super().save(*args, **kwargs)
+
+    def _validate_record_time_logic(self):
+        if self.record_start_time >= self.record_end_time:
+            raise ValidationError

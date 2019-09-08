@@ -16,10 +16,6 @@ def record_interval_validator(record: datetime):
         5: set(range(12, 21))
     }
 
-    # todo перенеси подобную проверку
-    # if record_start.weekday() != record_end.weekday():
-    #     raise ValidationError('End of the interval can not be less than start')
-
     record_week_day = record.weekday()
     if record.hour not in valid_intervals[record_week_day]:
         raise ValidationError('Wrong time interval')

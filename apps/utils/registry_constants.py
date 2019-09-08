@@ -11,13 +11,12 @@ from apps.utils.util import PatientRecord, extend_lists
 
 
 class RegistryManager:
-    GREETING_MAIN = f'Если вы хотите изменить параметры записи, то воспользуйтесь командой /change. \
-                    \n\nВыберите тип записи'
+    GREETING_MAIN = f'\n\nЕсли в процессе взаимодействия со мной вы ошибетесь, то используйте команду /cancel для отмены действий.'
 
-    PRIMARY_GREETING = f'Вас приветствует бот - регистратор доктора Тараки Фердауса! Напишите ваше имя, фамилию и номер телефона последовательно через 1 пробел. Не используйте \
-                        пробелы при написании ваших данных. Если ваше имя или фамилия состоят из нескольких слов, то \
-                        используйте тире. '
+    PRIMARY_GREETING = f'Вас приветствует бот - регистратор доктора Тараки Фердауса! Напишите ваше имя, фамилию и номер телефона последовательно через 1 пробел. Не используйте пробелы при написании ваших данных. Если ваше имя или фамилия состоят из нескольких слов, то используйте тире. '
     SECONDARY_GREETING = f'Рад видеть Вас снова. '
+    CHOOSE_RECORD_TYPE = f'Выберите тип записи.'
+    REPLY_RECORD_TYPE = [['Обычная', 'Расширенная']]
 
     APPOINTMENT = {
         'Обычная': {'primary': 'Стоимость первичной консультации 500р. ',
@@ -31,14 +30,21 @@ class RegistryManager:
 
     END_REGISTRY = 'Стоимость любой работы сообщается ТОЛЬКО после составления плана лечения, для которого нужен комплекс диагностических мероприятий. Ни по телефону, ни при помощи чатов диагнозы не ставятся, расчет стоимости лечения не проводится (ни примерный, ни точный).'
 
-    REPLY_RECORD_TYPE = [['Обычная', 'Расширенная']]
 
     @classmethod
     def greeting(cls, *, is_new: bool = True) -> str:
         greeting = cls.GREETING_MAIN
         if is_new:
             return cls.PRIMARY_GREETING + greeting
-        return cls.SECONDARY_GREETING + greeting
+        return cls.SECONDARY_GREETING + cls.CHOOSE_RECORD_TYPE + greeting
+
+    @classmethod
+    def choose_record_type(cls):
+        return cls.CHOOSE_RECORD_TYPE
+
+    @classmethod
+    def get_reply_record_type(cls):
+        return cls.REPLY_RECORD_TYPE
 
     @classmethod
     def record_info(cls, record_type: str, patient_type: str) -> str:
