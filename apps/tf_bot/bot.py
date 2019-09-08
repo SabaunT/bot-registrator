@@ -29,7 +29,7 @@ def start(update, context):
     # todo добавь проверку того, что человек уже имеет АКТУАЛЬНУЮ запись
     user_id = update.message.chat.id
 
-    _, created = Patient.objects.get_or_create(telegram_id=user_id)
+    patient, created = Patient.objects.get_or_create(telegram_id=user_id)
     context.user_data['patient_type'] = 'primary' if created else 'secondary'
 
     update.message.reply_text(
@@ -39,7 +39,7 @@ def start(update, context):
             one_time_keyboard=True)
     )
 
-    return REGISTER if created else RECORD
+    return REGISTER if patient.phone_number == '' else RECORD
 
 
 def register(update, context):
@@ -52,7 +52,7 @@ def register(update, context):
         with transaction.atomic():
             patient.save_patient_fields(restructed_patient_fields)
     except Patient.DoesNotExist:
-        raise InternalTelegramError('does not exist')
+        raise InternalTelegramError('User does not exist')
 
     update.message.reply_text(
         RegistryManager.choose_record_type(),
@@ -111,7 +111,7 @@ def time_interval(update, context):
     chosen_interval = update.message.text
     context.user_data['interval'] = chosen_interval
 
-    message_reply = f'Вы выбрали интервал {chosen_interval}. Осуществляю подготовку к записи.'
+    message_reply = f'Вы выбрали интервал {chosen_interval}. Осуществляю подготовку к записи...'
     update.message.reply_text(message_reply)
 
     """

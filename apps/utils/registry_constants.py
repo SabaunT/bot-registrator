@@ -82,8 +82,6 @@ class RegistryManager:
                 intervals_range = range(9, 15)
             elif weekday_of_day == 5:
                 intervals_range = range(12, 20)
-            else:
-                raise Exception('tmp exception') # todo temp
 
             available_intervals_template[day] = {PatientRecord(h, h+1) for h in intervals_range}
 
@@ -221,8 +219,6 @@ class RegistryManager:
         """
          Create the callback data associated to each button
          """
-
-        # todo FROM EXTERNAL LIB
         return ";".join([action, str(year), str(month), str(day)])
 
     @staticmethod
