@@ -2,16 +2,16 @@ import os
 import logging
 from datetime import timedelta
 
-from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup)
+from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler,
                           ConversationHandler)
 from django.db import transaction
 
 
 from apps.tf_bot.models import Patient, Record
-from apps.utils.registry_constants import RegistryManager
-from apps.utils import telegramcalendar
-from apps.utils.util import restruct_patient_fields
+from apps.tf_bot.helpers.registry_constants import RegistryManager
+from apps.tf_bot.helpers import telegramcalendar
+from apps.tf_bot.helpers.util import restruct_patient_fields
 from dr_tf_bot.exceptions import InternalTelegramError, UserTelegramError
 
 

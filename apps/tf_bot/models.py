@@ -4,7 +4,7 @@ from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from dr_tf_bot.exceptions import InternalTelegramError
 
-from apps.utils.validators import day_of_week_validator, record_interval_validator
+from apps.tf_bot.helpers.validators import day_of_week_validator, record_interval_validator
 
 
 class Patient(models.Model):

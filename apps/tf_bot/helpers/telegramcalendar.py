@@ -9,7 +9,7 @@ NEED MAJOR REFACTOR !!!!!!!!!!!
 VERY BAD CODE!!!!!!!!!!
 """
 import datetime
-from apps.utils.registry_constants import RegistryManager
+from apps.tf_bot.helpers.registry_constants import RegistryManager
 
 
 def separate_callback_data(data: str) -> [str]:
