@@ -116,7 +116,7 @@ def time_interval(update, context):
         new_record.record_end_time = context.user_data['day'] + timedelta(hours=int(intervals_list[1]))
         new_record.save()
 
-    update.message.reply_text(RegistryManager.END_REGISTRY)
+    update.message.reply_text(RegistryManager.end_registry())
     return ConversationHandler.END
 
 
