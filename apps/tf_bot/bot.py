@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import timedelta
 
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler,
@@ -61,13 +62,6 @@ def register(update, context):
 
     return RECORD
 
-'''
-TODO:
-5/ Добавить поддержку /change
-7/ Разобраться с работой логгера и определиться как лучше логгировать
-8/ Выкатить в прод
-'''
-
 
 def record(update, context):
     """
@@ -108,18 +102,22 @@ def date(update, context):
 
 
 def time_interval(update, context):
+    user_id = update.message.chat.id
     chosen_interval = update.message.text
-    context.user_data['interval'] = chosen_interval
 
     message_reply = f'Вы выбрали интервал {chosen_interval}. Осуществляю подготовку к записи...'
     update.message.reply_text(message_reply)
 
-    """
-    распакуй context.user_data, чтобы сохранить оттуда day и interval
-    """
-    print(context.user_data)
+    intervals_list = chosen_interval.split('-')
+    with transaction.atomic():
+        current_patient = Patient.objects.get(telegram_id=user_id)
+        new_record = Record.create(patient=current_patient)
+        new_record.record_start_time = context.user_data['day'] + timedelta(hours=int(intervals_list[0]))
+        new_record.record_end_time = context.user_data['day'] + timedelta(hours=int(intervals_list[1]))
+        new_record.save()
 
-    cancel(update, context)
+    update.message.reply_text(RegistryManager.END_REGISTRY)
+    return ConversationHandler.END
 
 
 def cancel(update, context):
