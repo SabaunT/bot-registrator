@@ -10,110 +10,55 @@ from apps.tf_bot.models import Record
 from apps.tf_bot.helpers.utils import PatientRecord, extend_lists
 
 
-class CalendarManager:
+class TelegramCalendarGenerator:
+    def __init__(self, now: datetime.now()):
+        self.year = now.year
+        self.month = now.month
+        self.current_day = now.day
 
-    @classmethod
-    def generate_calendar(cls, record_type: str):
-        """
-        Create an inline keyboard with the provided year and month
-        :param str record_type: type of record: either regular or extended
-        :return: Returns the InlineKeyboardMarkup object with the calendar.
-        """
-        now = datetime.now()
-        formed_calendar = list()
-
-        # First two rows in telegram calendar object
-        year_and_weekdays_rows = cls._create_support_rows(now)
-
-        days_rows = cls._create_available_days_row(record_type, now)
-
-        return InlineKeyboardMarkup(extend_lists(formed_calendar, year_and_weekdays_rows, days_rows))
-
-    @classmethod
-    def process_calendar_selection(cls, bot, update, record_type: str):
-
-        now = datetime.now()
-        year = now.year
-        month = now.month
-
-        available_intervals = cls._generate_available_intervals(year, month)
-        reserved_intervals = cls._get_reserved_intervals(year, month)
-
-        ret_data = (False, None)
-        query = update.callback_query
-        (action, year, month, day) = cls._separate_callback_data(query.data)
-        # todo UNREADABLE
-        if action == "IGNORE":
-            bot.answer_callback_query(callback_query_id=query.id)
-        elif action == "DAY":
-            bot.edit_message_text(text=query.message.text,
-                                  chat_id=query.message.chat_id,
-                                  message_id=query.message.message_id
-                                  )
-            free_intervals_in_day = cls._get_keyboard_typed_intervals_in_day(
-                available_intervals,
-                reserved_intervals,
-                record_type,
-                int(day)
-            )
-            ret_array = list()
-            for interval in free_intervals_in_day:
-                ret_array.append(f'{interval.start}-{interval.end}')
-            ret_data = True, datetime(int(year), int(month), int(day)), sorted(ret_array)
-
-        return ret_data
-
-    @classmethod
-    def _create_available_days_row(cls, record_type: str, now: datetime.now()):
-        year = now.year
-        month = now.month
-        current_day = now.day
+    def create_available_days_row(self, record_type: str):
 
         # for buttons with no actions
-        data_ignore = cls._create_callback_data("IGNORE", year, month, 0)
+        data_ignore = self.create_callback_data("IGNORE", self.year, self.month, 0)
 
-        available_intervals = cls._generate_available_intervals(year, month)
-        reserved_intervals = cls._get_reserved_intervals(year, month)
+        available_intervals = self.generate_available_intervals(self.year, self.month)
+        reserved_intervals = self.get_reserved_intervals(self.year, self.month)
 
         # todo unreadable?
         keyboard_days = list()
-        my_base_calendar: list = cls._create_base_calendar(year, month)
+        my_base_calendar: list = self._create_base_calendar(self.year, self.month)
         for week in my_base_calendar:
             days_row = list()
             for day in week:
-                if day == 0 or day <= current_day:
+                if day == 0 or day <= self.current_day:
                     days_row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
                 else:
-                    free_typed_intervals_in_day = cls._get_keyboard_typed_intervals_in_day(
+                    free_typed_intervals_in_day = self.get_keyboard_typed_intervals_in_day(
                         available_intervals,
                         reserved_intervals,
                         record_type,
                         day
                     )
                     if len(free_typed_intervals_in_day) != 0:
-                        data_process = cls._create_callback_data("DAY", year, month, day)
+                        data_process = self.create_callback_data("DAY", self.year, self.month, day)
                         days_row.append(InlineKeyboardButton(day, callback_data=data_process))
 
             keyboard_days.append(days_row)
 
         return keyboard_days
 
-    @classmethod
-    def _create_support_rows(cls, now: datetime.now()) -> [[InlineKeyboardButton], [InlineKeyboardButton]]:
+    def create_support_rows(self) -> [[InlineKeyboardButton], [InlineKeyboardButton]]:
         """
         Creates info support rows with current month, year, and weekdays
-        :param now current datetime
         :return: list of lists. Each of the list contains InlineKeyboardButton object
         """
-        year = now.year
-        month = now.month
 
         # for buttons with no actions
-        data_ignore = cls._create_callback_data("IGNORE", year, month, 0)
+        data_ignore = self.create_callback_data("IGNORE", self.year, self.month, 0)
 
         year_month_row = list()
         year_and_month_keyboard = InlineKeyboardButton(
-            calendar.month_name[month] + " " + str(year),
+            calendar.month_name[self.month] + " " + str(self.year),
             callback_data=data_ignore
         )
         year_month_row.append(year_and_month_keyboard)
@@ -125,7 +70,7 @@ class CalendarManager:
         return [year_month_row, week_days_row]
 
     @classmethod
-    def _generate_available_intervals(cls, year: int, month: int) -> {int: {PatientRecord}}:
+    def generate_available_intervals(cls, year: int, month: int) -> {int: {PatientRecord}}:
         """
         Generates all the intervals which possibly could be chosen
         :param year: datetime current year
@@ -143,12 +88,12 @@ class CalendarManager:
             elif weekday_of_day == 5:
                 intervals_range = range(12, 20)
 
-            available_intervals_template[day] = {PatientRecord(h, h+1) for h in intervals_range}
+            available_intervals_template[day] = {PatientRecord(h, h + 1) for h in intervals_range}
 
         return available_intervals_template
 
     @classmethod
-    def _get_reserved_intervals(cls, year: int, month: int):
+    def get_reserved_intervals(cls, year: int, month: int):
         min_for_query = datetime(year, month, 1, 0, 0, 0)
         max_for_query = datetime(year, month + 1, 1, 0, 0, 0)
 
@@ -157,7 +102,7 @@ class CalendarManager:
         return cls._restructure_reserved_intervals(year, month, reserved_intervals)
 
     @classmethod
-    def _get_keyboard_typed_intervals_in_day(
+    def get_keyboard_typed_intervals_in_day(
             cls, available_intervals: {int: {PatientRecord}}, reserved_interval, record_type: str, day: int
     ):
         """
@@ -198,7 +143,9 @@ class CalendarManager:
         return double_intervals
 
     @classmethod
-    def _restructure_reserved_intervals(cls, year: int, month: int, reserved_intervals: QuerySet) -> {int: {PatientRecord}}:
+    def _restructure_reserved_intervals(cls, year: int, month: int, reserved_intervals: QuerySet) -> {
+            int: {PatientRecord}
+    }:
         """
         Restructures records from query set in the following way: if a patient has double interval, it
         adds two intervals to the record day key.
@@ -250,15 +197,70 @@ class CalendarManager:
         return my_month_calendar
 
     @staticmethod
-    def _create_callback_data(action: str, year: int, month: int, day: int) -> str:
+    def create_callback_data(action: str, year: int, month: int, day: int) -> str:
         """
          Create the callback data associated to each button
          """
         return ";".join([action, str(year), str(month), str(day)])
 
     @staticmethod
-    def _separate_callback_data(data: str) -> [str]:
+    def separate_callback_data(data: str) -> [str]:
         """
         Separate the callback data
         """
         return data.split(";")
+
+
+class CalendarManager:
+
+    @classmethod
+    def generate_calendar(cls, record_type: str):
+        """
+        Create an inline keyboard with the provided year and month
+        :param str record_type: type of record: either regular or extended
+        :return: Returns the InlineKeyboardMarkup object with the calendar.
+        """
+        now = datetime.now()
+        calendar_generator = TelegramCalendarGenerator(now)
+        formed_calendar = list()
+
+        # First two rows in telegram calendar object
+        year_and_weekdays_rows = calendar_generator.create_support_rows()
+
+        days_rows = calendar_generator.create_available_days_row(record_type)
+
+        return InlineKeyboardMarkup(extend_lists(formed_calendar, year_and_weekdays_rows, days_rows))
+
+    @classmethod
+    def process_calendar_selection(cls, bot, update, record_type: str):
+
+        now = datetime.now()
+        year = now.year
+        month = now.month
+
+        available_intervals = TelegramCalendarGenerator.generate_available_intervals(year, month)
+        reserved_intervals = TelegramCalendarGenerator.get_reserved_intervals(year, month)
+
+        ret_data = (False, None)
+        query = update.callback_query
+        (action, year, month, day) = TelegramCalendarGenerator.separate_callback_data(query.data)
+        # todo UNREADABLE
+        if action == "IGNORE":
+            bot.answer_callback_query(callback_query_id=query.id)
+        elif action == "DAY":
+            bot.edit_message_text(text=query.message.text,
+                                  chat_id=query.message.chat_id,
+                                  message_id=query.message.message_id
+                                  )
+            free_intervals_in_day = TelegramCalendarGenerator.get_keyboard_typed_intervals_in_day(
+                available_intervals,
+                reserved_intervals,
+                record_type,
+                int(day)
+            )
+            ret_array = list()
+            for interval in free_intervals_in_day:
+                ret_array.append(f'{interval.start}-{interval.end}')
+            ret_data = True, datetime(int(year), int(month), int(day)), sorted(ret_array)
+
+        return ret_data
