@@ -11,8 +11,8 @@ from django.conf import settings
 
 from apps.tf_bot.models import Patient, Record
 from apps.tf_bot.helpers.registry_constants import RegistryManager
-from apps.tf_bot.helpers.telegramcalendar import CalendarGenerator
-from apps.tf_bot.helpers.utils import restruct_patient_fields
+from apps.tf_bot.helpers.telegramcalendar import CalendarManager
+from apps.tf_bot.helpers.utils import restruct_patient_fields, check_patient_record_ability
 from dr_tf_bot.exceptions import InternalTelegramError, UserTelegramError
 
 
@@ -24,8 +24,12 @@ REGISTER, RECORD, DATE, INTERVAL = range(4)
 
 
 def start(update, context):
-    # todo добавь проверку того, что человек уже имеет АКТУАЛЬНУЮ запись
     user_id = update.message.chat.id
+
+    if not check_patient_record_ability(user_id):
+        update.message.reply_text(RegistryManager.not_able_response())
+
+        return ConversationHandler.END
 
     patient, created = Patient.objects.get_or_create(telegram_id=user_id)
     context.user_data['patient_type'] = 'primary' if created else 'secondary'
@@ -68,7 +72,7 @@ def record(update, context):
 
     context.user_data['record_type'] = Record.REGULAR if record_type == 'Обычная' else Record.EXTENDED
 
-    reply_keyboard = CalendarGenerator.generate_calendar(Record.REGULAR)
+    reply_keyboard = CalendarManager.generate_calendar(Record.REGULAR)
     message_reply = RegistryManager.record_info(record_type, context.user_data['patient_type']) + 'Выберите дату.'
 
     update.message.reply_text(message_reply, reply_markup=reply_keyboard)
@@ -77,7 +81,7 @@ def record(update, context):
 
 
 def date(update, context):
-    is_selected, chosen_date, days_array = CalendarGenerator.process_calendar_selection(
+    is_selected, chosen_date, days_array = CalendarManager.process_calendar_selection(
         context.bot,
         update,
         context.user_data['record_type']

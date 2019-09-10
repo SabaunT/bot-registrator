@@ -18,6 +18,7 @@ class RegistryManager:
 
     END_REGISTRY = 'Вы успешно записаны. Стоимость любой работы сообщается ТОЛЬКО после составления плана лечения, для которого нужен комплекс диагностических мероприятий. Ни по телефону, ни при помощи чатов диагнозы не ставятся, расчет стоимости лечения не проводится (ни примерный, ни точный).'
 
+    NOT_ABLE_TO_REGISTER = 'Простите, но я не могу вас зарегистрировать. У вас уже есть активная запись.'
 
     @classmethod
     def greeting(cls, *, is_new: bool = True) -> str:
@@ -41,3 +42,7 @@ class RegistryManager:
     @classmethod
     def end_registry(cls):
         return cls.END_REGISTRY
+
+    @classmethod
+    def not_able_response(cls):
+        return cls.NOT_ABLE_TO_REGISTER

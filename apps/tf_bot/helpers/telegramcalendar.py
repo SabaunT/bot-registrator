@@ -10,7 +10,7 @@ from apps.tf_bot.models import Record
 from apps.tf_bot.helpers.utils import PatientRecord, extend_lists
 
 
-class CalendarGenerator:
+class CalendarManager:
 
     @classmethod
     def generate_calendar(cls, record_type: str):
