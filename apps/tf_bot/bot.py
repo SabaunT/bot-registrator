@@ -6,6 +6,7 @@ from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler,
                           ConversationHandler)
 from django.db import transaction
+from django.conf import settings
 
 
 from apps.tf_bot.models import Patient, Record
@@ -18,10 +19,6 @@ from dr_tf_bot.exceptions import InternalTelegramError, UserTelegramError
 # TODO поменяй логгер
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Todo это вообще в другое место
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
-assert BOT_TOKEN
 
 REGISTER, RECORD, DATE, INTERVAL = range(4)
 
@@ -139,39 +136,38 @@ def error(update, context):
         update.message.reply_text('Появилась ошибка! Из-за тебя, между прочим!', reply_markup=ReplyKeyboardRemove())
 
 
-def main():
-    # todo скрой
-    REQUEST_KWARGS = {
-        'proxy_url': 'http://equohnge4fiequiem4Du:Ahphi7ahvoh6IejahPha@proxy.mixbytes.io:3128',
-        # Optional, if you need authentication:
-    }
-    updater = Updater(BOT_TOKEN, request_kwargs=REQUEST_KWARGS, use_context=True)
+class TFBot:
+    def __init__(self):
+        self.token = settings.BOT_TOKEN
+        self.proxy_login = settings.TELEGRAM_PROXY_LOGIN
+        self.proxy_pass = settings.TELEGRAM_PROXY_PASS
 
-    dp = updater.dispatcher
+        self.updater = Updater(self.token, request_kwargs=self.request_kwargs, use_context=True)
+        self.dispatcher = self.updater.dispatcher
 
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+    def setup(self):
+        conv_handler = ConversationHandler(
+            entry_points=[CommandHandler('start', start)],
 
-        states={
-            REGISTER: [MessageHandler(Filters.text, register)],
-            RECORD: [MessageHandler(Filters.regex('^(Обычная|Расширенная)$'), record)],
+            states={
+                REGISTER: [MessageHandler(Filters.text, register)],
+                RECORD: [MessageHandler(Filters.regex('^(Обычная|Расширенная)$'), record)],
 
-            DATE: [CallbackQueryHandler(date)],
+                DATE: [CallbackQueryHandler(date)],
 
-            INTERVAL: [MessageHandler(Filters.text, time_interval)] # todo regexp
-        },
+                INTERVAL: [MessageHandler(Filters.regex('^((\d{,2})-(\d{,2}))$'), time_interval)]
+            },
 
-        fallbacks=[CommandHandler('cancel', cancel)]
-    )
+            fallbacks=[CommandHandler('cancel', cancel)]
+        )
 
-    dp.add_handler(conv_handler)
+        self.dispatcher.add_handler(conv_handler)
+        self.dispatcher.add_error_handler(error)
 
-    # log all errors
-    dp.add_error_handler(error)
+    def run(self):
+        self.updater.start_polling()
+        self.updater.idle() # development
 
-    updater.start_polling()
-    updater.idle()
-
-
-if __name__ == '__main__':
-    main()
+    @property
+    def request_kwargs(self):
+        return {'proxy_url': f'http://{self.proxy_login}:{self.proxy_pass}@proxy.mixbytes.io:3128'}

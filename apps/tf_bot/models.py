@@ -58,6 +58,7 @@ class Record(models.Model):
     def save(self, *args, **kwargs):
         try:
             self._validate_record_time_logic()
+            self._validate_interval_length()
             self.full_clean()
         except ValidationError as e:
             raise InternalTelegramError('LOL') from e
@@ -66,4 +67,9 @@ class Record(models.Model):
 
     def _validate_record_time_logic(self):
         if self.record_start_time >= self.record_end_time:
+            raise ValidationError
+
+    def _validate_interval_length(self):
+        interval_length = self.record_end_time.hour - self.record_start_time.hour
+        if interval_length not in {1, 2}:
             raise ValidationError

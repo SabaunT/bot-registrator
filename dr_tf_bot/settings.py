@@ -76,14 +76,13 @@ WSGI_APPLICATION = 'dr_tf_bot.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-    # TODO скрой настройки
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'tf_bot',
-        'USER': 'tf_bot_user',
-        'PASSWORD': 'tf_bot_password',
-        'HOST': 'localhost',
-        'PORT': '5432'
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT')
     }
 }
 
@@ -125,3 +124,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# Configuration
+BOT_TOKEN = os.environ.get('BOT_TOKEN')
+
+TELEGRAM_PROXY_LOGIN = os.environ.get('PROXY_LOGIN')
+TELEGRAM_PROXY_PASS = os.environ.get('PROXY_PASS')
