@@ -1,5 +1,6 @@
-from django.db import models
+from datetime import timedelta
 
+from django.db import models
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from dr_tf_bot.exceptions import InternalTelegramError
@@ -54,6 +55,15 @@ class Record(models.Model):
     def create(cls, **kwargs):
         record = cls(**kwargs)
         return record
+
+    def save_record_fields(self, user_data: dict, intervals: list):
+        fields = ['record_start_time', 'record_end_time']
+
+        for i in range(2):
+            key = fields[i]
+            self.__dict__[key] = user_data['day'] + timedelta(hours=int(intervals[i]))
+
+        self.save()
 
     def save(self, *args, **kwargs):
         try:

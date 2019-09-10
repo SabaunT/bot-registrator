@@ -1,11 +1,9 @@
-import os
 import logging
 from datetime import timedelta
 
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler,
                           ConversationHandler)
-from django.db import transaction
 from django.conf import settings
 
 
@@ -51,8 +49,7 @@ def register(update, context):
     restructed_patient_fields = restruct_patient_fields(user_response)
     try:
         patient = Patient.objects.get(telegram_id=user_id)
-        with transaction.atomic():
-            patient.save_patient_fields(restructed_patient_fields)
+        patient.save_patient_fields(restructed_patient_fields)
     except Patient.DoesNotExist:
         raise InternalTelegramError('User does not exist')
 
@@ -110,12 +107,14 @@ def time_interval(update, context):
     update.message.reply_text(message_reply)
 
     intervals_list = chosen_interval.split('-')
-    with transaction.atomic():
+
+    try:
         current_patient = Patient.objects.get(telegram_id=user_id)
-        new_record = Record.create(patient=current_patient)
-        new_record.record_start_time = context.user_data['day'] + timedelta(hours=int(intervals_list[0]))
-        new_record.record_end_time = context.user_data['day'] + timedelta(hours=int(intervals_list[1]))
-        new_record.save()
+    except Patient.DoesNotExist:
+        raise InternalTelegramError('User does not exist')
+
+    new_record = Record.create(patient=current_patient)
+    new_record.save_record_fields(context.user_data, intervals_list)
 
     update.message.reply_text(RegistryManager.end_registry())
     return ConversationHandler.END

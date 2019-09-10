@@ -24,6 +24,11 @@ def restruct_patient_fields(user_response: str):
 
 
 def check_patient_record_ability(user_id: int) -> bool:
+    """
+    Patient should not have any future records
+    :param user_id: user telegram id
+    :return: True if patient does not have records, else - False
+    """
     now = datetime.now()
 
     year = now.year
