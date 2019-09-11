@@ -27,11 +27,10 @@ class Patient(models.Model):
         return patient
 
     def save_patient_fields(self, patient_fields):
-        fields = ['last_name', 'first_name', 'phone_number']
+        model_fields = ['last_name', 'first_name', 'phone_number']
         try:
-            for i in range(3):
-                key = fields[i]
-                self.__dict__[key] = patient_fields[i]
+            for field, patient_info in zip(model_fields, patient_fields):
+                self.__dict__[field] = patient_info
 
             self.full_clean()
             self.save()
@@ -59,9 +58,8 @@ class Record(models.Model):
     def save_record_fields(self, user_data: dict, intervals: list):
         fields = ['record_start_time', 'record_end_time']
 
-        for i in range(2):
-            key = fields[i]
-            self.__dict__[key] = user_data['day'] + timedelta(hours=int(intervals[i]))
+        for field, interval in zip(fields, intervals):
+            self.__dict__[field] = user_data['day'] + timedelta(hours=int(interval))
 
         self.save()
 
