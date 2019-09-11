@@ -1,18 +1,16 @@
 import logging
-from datetime import timedelta
 
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler,
                           ConversationHandler)
 from django.conf import settings
 
-
 from apps.tf_bot.models import Patient, Record
 from apps.tf_bot.helpers.registry_constants import RegistryManager
 from apps.tf_bot.helpers.telegramcalendar import CalendarManager
-from apps.tf_bot.helpers.utils import restruct_patient_fields, check_patient_record_ability
+from apps.tf_bot.helpers.bot_checker import BotStartChecker
+from apps.tf_bot.helpers.utils import restruct_patient_fields
 from dr_tf_bot.exceptions import InternalTelegramError, UserTelegramError
-
 
 # TODO поменяй логгер
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -23,10 +21,10 @@ REGISTER, RECORD, DATE, INTERVAL = range(4)
 
 def start(update, context):
     user_id = update.message.chat.id
+    bot_checker = BotStartChecker()
 
-    if not check_patient_record_ability(user_id):
+    if not bot_checker.get_bot_start_ability(user_id):
         update.message.reply_text(RegistryManager.not_able_response())
-
         return ConversationHandler.END
 
     patient, created = Patient.objects.get_or_create(telegram_id=user_id)
@@ -104,7 +102,7 @@ def time_interval(update, context):
     chosen_interval = update.message.text
 
     message_reply = f'Вы выбрали интервал {chosen_interval}. Осуществляю подготовку к записи...'
-    update.message.reply_text(message_reply)
+    update.message.reply_text(message_reply, reply_markup=ReplyKeyboardRemove())
 
     intervals_list = chosen_interval.split('-')
 
@@ -169,7 +167,7 @@ class TFBot:
 
     def run(self):
         self.updater.start_polling()
-        self.updater.idle() # development
+        self.updater.idle()  # development
 
     @property
     def request_kwargs(self):

@@ -69,8 +69,11 @@ class TelegramCalendarGenerator:
 
         return [year_month_row, week_days_row]
 
-    @classmethod
-    def generate_available_intervals(cls, year: int, month: int) -> {int: {PatientRecord}}:
+    def get_last_month_day(self):
+        my_calendar = self._trimmed_flat_calendar(self.year, self.month)
+        return my_calendar[-1]
+
+    def generate_available_intervals(self, year: int, month: int) -> {int: {PatientRecord}}:
         """
         Generates all the intervals which possibly could be chosen
         :param year: datetime current year
@@ -78,7 +81,7 @@ class TelegramCalendarGenerator:
         :return: dict where keys are dates for Tuesdays, Fridays and Saturdays of the month
                  and values are sets of tuples - intervals
         """
-        available_intervals_template = cls._new_data_set(year, month)
+        available_intervals_template = self._new_data_set(year, month)
 
         for day in available_intervals_template.keys():
             weekday_of_day = datetime(year, month, day).weekday()
@@ -92,14 +95,13 @@ class TelegramCalendarGenerator:
 
         return available_intervals_template
 
-    @classmethod
-    def get_reserved_intervals(cls, year: int, month: int):
+    def get_reserved_intervals(self, year: int, month: int):
         min_for_query = datetime(year, month, 1, 0, 0, 0)
         max_for_query = datetime(year, month + 1, 1, 0, 0, 0)
 
         reserved_intervals = Record.objects.filter(record_end_time__range=(min_for_query, max_for_query))
 
-        return cls._restructure_reserved_intervals(year, month, reserved_intervals)
+        return self._restructure_reserved_intervals(year, month, reserved_intervals)
 
     @classmethod
     def get_keyboard_typed_intervals_in_day(
@@ -157,7 +159,7 @@ class TelegramCalendarGenerator:
             interval_end_hour = reserved_interval.record_end_time.hour
 
             if interval_end_hour - interval_start_hour == 2:
-                adding_intervals = [PatientRecord(interval_start_hour + i, interval_end_hour + i) for i in range(2)]
+                adding_intervals = [PatientRecord(interval_start_hour + i, interval_end_hour + i-1) for i in range(2)]
             else:
                 adding_intervals = [PatientRecord(interval_start_hour, interval_end_hour)]
             reserved_intervals_template_set[reserved_interval.record_start_time.day].update(adding_intervals)
@@ -235,11 +237,13 @@ class CalendarManager:
     def process_calendar_selection(cls, bot, update, record_type: str):
 
         now = datetime.now()
-        year = now.year
-        month = now.month
 
-        available_intervals = TelegramCalendarGenerator.generate_available_intervals(year, month)
-        reserved_intervals = TelegramCalendarGenerator.get_reserved_intervals(year, month)
+        calendar_generator = TelegramCalendarGenerator(now)
+        available_intervals = calendar_generator.generate_available_intervals(calendar_generator.year,
+                                                                              calendar_generator.month)
+
+        reserved_intervals = calendar_generator.get_reserved_intervals(calendar_generator.year,
+                                                                       calendar_generator.month)
 
         ret_data = (False, None)
         query = update.callback_query
@@ -260,7 +264,7 @@ class CalendarManager:
             )
             ret_array = list()
             for interval in free_intervals_in_day:
-                ret_array.append(f'{interval.start}-{interval.end}')
+                ret_array.append(f'{interval.start}-{interval.end}')    # actually, I am sorting strings. Uh...
             ret_data = True, datetime(int(year), int(month), int(day)), sorted(ret_array)
 
         return ret_data
