@@ -23,7 +23,7 @@ def start(update, context):
     user_id = update.message.chat.id
     bot_checker = BotStartChecker()
 
-    if not bot_checker.get_bot_start_ability(user_id):
+    if not bot_checker.get_bot_start_ability_status(user_id):
         update.message.reply_text(RegistryManager.not_able_response())
         return ConversationHandler.END
 

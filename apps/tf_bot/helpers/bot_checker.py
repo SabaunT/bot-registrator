@@ -20,7 +20,7 @@ class BotStartChecker:
 
         self.calendar_generator = TelegramCalendarGenerator(current_time)
 
-    def get_bot_start_ability(self, user_id: int) -> bool:
+    def get_bot_start_ability_status(self, user_id: int) -> bool:
         patient_can_register = self._check_patient_record_ability(user_id)
         db_has_free_intervals = self._check_db_record_ability()
         its_not_final_record_day = self._check_final_date()
