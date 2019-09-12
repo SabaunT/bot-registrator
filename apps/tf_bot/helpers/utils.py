@@ -12,7 +12,7 @@ def extend_lists(main_list: list, *lists):
     return main_list
 
 
-def restruct_patient_fields(user_response: str):
+def split_patient_info(user_response: str):
     listed_response = user_response.split(' ')
 
     if len(listed_response) != 3:

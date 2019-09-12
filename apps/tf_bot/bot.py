@@ -9,7 +9,7 @@ from apps.tf_bot.models import Patient, Record
 from apps.tf_bot.helpers.registry_constants import RegistryManager
 from apps.tf_bot.helpers.telegram_calendar import CalendarManager
 from apps.tf_bot.helpers.bot_checker import BotStartChecker
-from apps.tf_bot.helpers.utils import restruct_patient_fields
+from apps.tf_bot.helpers.utils import split_patient_info
 from dr_tf_bot.exceptions import InternalTelegramError, UserTelegramError
 
 
@@ -43,10 +43,10 @@ def register(update, context):
     user_id = update.message.chat.id
     user_response = update.message.text
 
-    restructed_patient_fields = restruct_patient_fields(user_response)
+    listed_patient_info = split_patient_info(user_response)
     try:
         patient = Patient.objects.get(telegram_id=user_id)
-        patient.save_patient_fields(restructed_patient_fields)
+        patient.save_patient_fields(listed_patient_info)
     except Patient.DoesNotExist:
         raise InternalTelegramError(f'User {user_id} user does not exist')
 
@@ -105,7 +105,7 @@ def time_interval(update, context):
     new_record = Record.create(patient=current_patient)
     new_record.save_record_fields(context.user_data, intervals_list)
 
-    update.message.reply_text(RegistryManager.end_registry())
+    update.message.reply_text(text=RegistryManager.end_registry())
     return ConversationHandler.END
 
 
