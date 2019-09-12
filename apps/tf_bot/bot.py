@@ -65,7 +65,7 @@ def record(update, context):
     reply_keyboard = CalendarManager.generate_calendar(Record.REGULAR)
     message_reply = RegistryManager.record_info(record_type, context.user_data['patient_type']) + 'Выберите дату.'
 
-    update.message.reply_text(message_reply, reply_markup=reply_keyboard)
+    update.message.reply_text(text=message_reply, reply_markup=reply_keyboard)
     return DATE
 
 
@@ -94,7 +94,7 @@ def time_interval(update, context):
     chosen_interval = update.message.text
 
     message_reply = f'Вы выбрали интервал {chosen_interval}. Осуществляю подготовку к записи...'
-    update.message.reply_text(message_reply, reply_markup=ReplyKeyboardRemove())
+    update.message.reply_text(text=message_reply, reply_markup=ReplyKeyboardRemove())
 
     try:
         current_patient = Patient.objects.get(telegram_id=user_id)
@@ -112,7 +112,7 @@ def time_interval(update, context):
 def cancel(update, context):
     user = update.message.from_user
     logger.info("User %s canceled the conversation.", user.first_name)
-    update.message.reply_text('Здоровья Вам! Если что, обязательно обращайтесь.',
+    update.message.reply_text(texy='Здоровья Вам! Если что, обязательно обращайтесь.',
                               reply_markup=ReplyKeyboardRemove())
 
     return ConversationHandler.END
@@ -123,9 +123,12 @@ def error(update, context):
     try:
         raise context.error
     except InternalTelegramError:
+        update.message.reply_text(text=RegistryManager.internal_error_occured(),
+                                  reply_markup=ReplyKeyboardRemove())
         logger.exception('Update "%s" caused error "%s"', update, context.error)
     except UserTelegramError:
-        update.message.reply_text('Появилась ошибка! Из-за тебя, между прочим!', reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text(text=RegistryManager.external_error_occured(),
+                                  reply_markup=ReplyKeyboardRemove())
 
 
 class TFBot:

@@ -19,6 +19,8 @@ class RegistryManager:
     END_REGISTRY = 'Вы успешно записаны. Стоимость любой работы сообщается ТОЛЬКО после составления плана лечения, для которого нужен комплекс диагностических мероприятий. Ни по телефону, ни при помощи чатов диагнозы не ставятся, расчет стоимости лечения не проводится (ни примерный, ни точный).'
 
     NOT_ABLE_TO_REGISTER = 'Простите, но запись пока недоступна.'
+    INTERNAL_ERROR = 'Появилась ошибка. Сообщите об этом в поддержку: @drTFSupport'
+    EXTERNAL_ERROR = 'Кажется, вы сделали что-то не по инструкции...'
 
     @classmethod
     def greeting(cls, *, is_new: bool = True) -> str:
@@ -46,3 +48,11 @@ class RegistryManager:
     @classmethod
     def not_able_response(cls):
         return cls.NOT_ABLE_TO_REGISTER
+
+    @classmethod
+    def internal_error_occured(cls):
+        return cls.INTERNAL_ERROR
+
+    @classmethod
+    def external_error_occured(cls):
+        return cls.EXTERNAL_ERROR
