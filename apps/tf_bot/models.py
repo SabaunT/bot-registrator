@@ -35,7 +35,7 @@ class Patient(models.Model):
             self.full_clean()
             self.save()
         except ValidationError as e:
-            raise InternalTelegramError('LOL') from e
+            raise InternalTelegramError('Failed to save patient fields') from e
 
 
 class Record(models.Model):
@@ -69,7 +69,7 @@ class Record(models.Model):
             self._validate_interval_length()
             self.full_clean()
         except ValidationError as e:
-            raise InternalTelegramError('LOL') from e
+            raise InternalTelegramError('Failed to save record') from e
         
         super().save(*args, **kwargs)
 

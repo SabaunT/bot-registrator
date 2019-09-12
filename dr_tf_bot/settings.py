@@ -19,11 +19,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '6p)&39x2+w5(%sz9*za6k_x18$o^_txu)b+7dgk9)ddb*ah_+$'
+SECRET_KEY = os.environ.get('SECRET_KEY')
+assert SECRET_KEY, "Secret key is not set"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
@@ -74,6 +74,18 @@ WSGI_APPLICATION = 'dr_tf_bot.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
+
+DB_NAME = os.environ.get('DB_NAME')
+DB_USER = os.environ.get('DB_USER')
+DB_PASSWORD = os.environ.get('DB_PASSWORD')
+DB_HOST = os.environ.get('DB_HOST')
+DB_PORT = os.environ.get('DB_PORT')
+
+assert DB_NAME, "DB name is not set"
+assert DB_USER, "DB user is not set"
+assert DB_PASSWORD, "DB pass is not set"
+assert DB_HOST, "DB host is not set"
+assert DB_PORT, "DB port is not set"
 
 DATABASES = {
     'default': {
@@ -128,6 +140,10 @@ STATIC_URL = '/static/'
 
 # Configuration
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
+assert BOT_TOKEN, "Bot token is not set"
 
 TELEGRAM_PROXY_LOGIN = os.environ.get('PROXY_LOGIN')
 TELEGRAM_PROXY_PASS = os.environ.get('PROXY_PASS')
+
+assert TELEGRAM_PROXY_LOGIN, "Proxy login is not set"
+assert TELEGRAM_PROXY_PASS, "Proxy password is not set"
