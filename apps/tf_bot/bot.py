@@ -25,7 +25,7 @@ def start(update, context):
 
     if not bot_checker.get_bot_start_ability_status(user_id):
         update.message.reply_text(RegistryManager.not_able_response())
-        logger.info(f'{user_id} tried to get use bot, but was stopped.')
+        logger.info(f'{user_id} tried to use bot, but was stopped.')
         return ConversationHandler.END
 
     patient, created = Patient.objects.get_or_create(telegram_id=user_id)
