@@ -103,20 +103,19 @@ class TelegramCalendarGenerator:
 
         return self._restructure_reserved_intervals(year, month, reserved_intervals)
 
-    @classmethod
     def get_keyboard_typed_intervals_in_day(
-            cls, available_intervals: {int: {PatientRecord}}, reserved_interval, record_type: str, day: int
+            self, available_intervals: {int: {PatientRecord}}, reserved_interval, record_type: str, day: int
     ):
         """
         Gets allowed for record intervals which will be presented on board. The argument `record_type` means that
         that shown intervals could be doubled (regular record: 9-10, extended record: 9-11)
         """
-        keyboard_intervals_in_day = cls._get_keyboard_intervals_in_day(available_intervals, reserved_interval, day)
+        keyboard_intervals_in_day = self._get_keyboard_intervals_in_day(available_intervals, reserved_interval, day)
 
         if record_type == Record.REGULAR:
             return keyboard_intervals_in_day
 
-        return cls._generate_double_intervals_in_day(keyboard_intervals_in_day)
+        return self._generate_double_intervals_in_day(keyboard_intervals_in_day)
 
     @staticmethod
     def _get_keyboard_intervals_in_day(
@@ -247,7 +246,7 @@ class CalendarManager:
 
         ret_data = (False, None)
         query = update.callback_query
-        (action, year, month, day) = TelegramCalendarGenerator.separate_callback_data(query.data)
+        (action, year, month, day) = calendar_generator.separate_callback_data(query.data)
         # todo UNREADABLE
         if action == "IGNORE":
             bot.answer_callback_query(callback_query_id=query.id)
@@ -256,7 +255,7 @@ class CalendarManager:
                                   chat_id=query.message.chat_id,
                                   message_id=query.message.message_id
                                   )
-            free_intervals_in_day = TelegramCalendarGenerator.get_keyboard_typed_intervals_in_day(
+            free_intervals_in_day = calendar_generator.get_keyboard_typed_intervals_in_day(
                 available_intervals,
                 reserved_intervals,
                 record_type,

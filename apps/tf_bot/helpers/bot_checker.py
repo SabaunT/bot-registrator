@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from apps.tf_bot.models import Record
-from apps.tf_bot.helpers.telegramcalendar import TelegramCalendarGenerator
+from apps.tf_bot.helpers.telegram_calendar import TelegramCalendarGenerator
 
 
 class BotStartChecker:

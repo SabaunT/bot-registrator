@@ -7,7 +7,7 @@ from django.conf import settings
 
 from apps.tf_bot.models import Patient, Record
 from apps.tf_bot.helpers.registry_constants import RegistryManager
-from apps.tf_bot.helpers.telegramcalendar import CalendarManager
+from apps.tf_bot.helpers.telegram_calendar import CalendarManager
 from apps.tf_bot.helpers.bot_checker import BotStartChecker
 from apps.tf_bot.helpers.utils import restruct_patient_fields
 from dr_tf_bot.exceptions import InternalTelegramError, UserTelegramError
