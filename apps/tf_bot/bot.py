@@ -119,7 +119,6 @@ def cancel(update, context):
 
 
 def error(update, context):
-    """Log Errors caused by Updates."""
     try:
         raise context.error
     except InternalTelegramError:
