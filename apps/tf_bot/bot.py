@@ -36,7 +36,7 @@ def start(update, context):
         reply_markup=None if created else ReplyKeyboardMarkup(RegistryManager.get_reply_record_type(),
                                                               one_time_keyboard=True)
     )
-    return REGISTER if patient.phone_number == '' else RECORD
+    return REGISTER if not patient.phone_number else RECORD
 
 
 def register(update, context):
