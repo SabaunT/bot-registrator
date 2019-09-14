@@ -23,7 +23,7 @@ class RegistryManager:
     EXTERNAL_ERROR = 'Кажется, вы сделали что-то не по инструкции...'
 
     @classmethod
-    def greeting(cls, *, is_new: bool = True) -> str:
+    def greeting(cls, is_new: bool = True) -> str:
         greeting = cls.GREETING_MAIN
         if is_new:
             return cls.PRIMARY_GREETING + greeting

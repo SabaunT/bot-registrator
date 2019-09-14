@@ -29,14 +29,15 @@ def start(update, context):
         return ConversationHandler.END
 
     patient, _ = Patient.objects.get_or_create(telegram_id=user_id)
-    context.user_data['patient_type'] = 'primary' if not patient.phone_number else 'secondary'
+    is_known_patient = bool(patient.phone_number)
+    context.user_data['patient_type'] = 'primary' if not is_known_patient else 'secondary'
 
     update.message.reply_text(
-        text=RegistryManager.greeting(is_new=bool(patient.phone_number)),
-        reply_markup=None if not patient.phone_number else ReplyKeyboardMarkup(RegistryManager.get_reply_record_type(),
-                                                                               one_time_keyboard=True)
+        text=RegistryManager.greeting(is_known_patient),
+        reply_markup=None if not is_known_patient else ReplyKeyboardMarkup(RegistryManager.get_reply_record_type(),
+                                                                           one_time_keyboard=True)
     )
-    return REGISTER if not patient.phone_number else RECORD
+    return REGISTER if not is_known_patient else RECORD
 
 
 def register(update, context):
