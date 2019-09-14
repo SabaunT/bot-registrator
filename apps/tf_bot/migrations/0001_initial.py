@@ -31,8 +31,8 @@ class Migration(migrations.Migration):
             name='Record',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('record_start_time', models.DateTimeField(validators=[apps.tf_bot.helpers.validators.day_of_week_validator, apps.tf_bot.helpers.validators.record_interval_validator])),
-                ('record_end_time', models.DateTimeField(validators=[apps.tf_bot.helpers.validators.day_of_week_validator, apps.tf_bot.helpers.validators.record_interval_validator])),
+                ('record_start_time', models.DateTimeField(validators=[apps.tf_bot.helpers.validators.date_field_validator])),
+                ('record_end_time', models.DateTimeField(validators=[apps.tf_bot.helpers.validators.date_field_validator])),
                 ('patient', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='tf_bot.Patient')),
             ],
             options={

@@ -19,13 +19,13 @@ class RegistryManager:
     END_REGISTRY = 'Вы успешно записаны. Стоимость любой работы сообщается ТОЛЬКО после составления плана лечения, для которого нужен комплекс диагностических мероприятий. Ни по телефону, ни при помощи чатов диагнозы не ставятся, расчет стоимости лечения не проводится (ни примерный, ни точный).'
 
     NOT_ABLE_TO_REGISTER = 'Простите, но запись пока недоступна.'
-    INTERNAL_ERROR = 'Появилась ошибка. Сообщите об этом в поддержку: @drTFSupport'
+    INTERNAL_ERROR = 'Появилась внутренняя ошибка. Советую остановить работу с помощью /cancel. И написать в поддержку: @drTFBotSupport'
     EXTERNAL_ERROR = 'Кажется, вы сделали что-то не по инструкции...'
 
     @classmethod
-    def greeting(cls, is_new: bool = True) -> str:
+    def greeting(cls, is_known: bool = True) -> str:
         greeting = cls.GREETING_MAIN
-        if is_new:
+        if not is_known:
             return cls.PRIMARY_GREETING + greeting
         return cls.SECONDARY_GREETING + cls.CHOOSE_RECORD_TYPE + greeting
 

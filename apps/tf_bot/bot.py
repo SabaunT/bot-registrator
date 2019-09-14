@@ -82,7 +82,8 @@ def date(update, context):
         message_reply = 'Вы выбрали {}. Выберите интервал записи'.format(chosen_date.strftime("%d/%m/%Y"))
 
         reply_intervals = [days_array]
-        update.message.reply_text(
+        context.bot.send_message(
+            chat_id=update.callback_query.from_user.id,
             text=message_reply,
             reply_markup=ReplyKeyboardMarkup(reply_intervals, one_time_keyboard=True)
         )
@@ -112,7 +113,7 @@ def time_interval(update, context):
 def cancel(update, context):
     user = update.message.from_user
     logger.info("User %s canceled the conversation.", user.first_name)
-    update.message.reply_text(texy='Здоровья Вам! Если что, обязательно обращайтесь.',
+    update.message.reply_text(text='Здоровья Вам! Если что, обязательно обращайтесь.',
                               reply_markup=ReplyKeyboardRemove())
 
     return ConversationHandler.END
@@ -128,6 +129,7 @@ def error(update, context):
     except UserTelegramError:
         update.message.reply_text(text=RegistryManager.external_error_occured(),
                                   reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
 
 
 class TFBot:

@@ -5,7 +5,7 @@ from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from dr_tf_bot.exceptions import InternalTelegramError
 
-from apps.tf_bot.helpers.validators import day_of_week_validator, record_interval_validator
+from apps.tf_bot.helpers.validators import date_field_validator
 
 
 class Patient(models.Model):
@@ -26,6 +26,9 @@ class Patient(models.Model):
         patient = cls(**kwargs)
         return patient
 
+    def __str__(self):
+        return f'{self.telegram_id} - {self.last_name} {self.first_name}'
+
     def save_patient_fields(self, patient_fields):
         model_fields = ['last_name', 'first_name', 'phone_number']
         try:
@@ -43,8 +46,8 @@ class Record(models.Model):
     EXTENDED = 'Extended'
 
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT)
-    record_start_time = models.DateTimeField(validators=[day_of_week_validator, record_interval_validator])
-    record_end_time = models.DateTimeField(validators=[day_of_week_validator, record_interval_validator])
+    record_start_time = models.DateTimeField(validators=[date_field_validator])
+    record_end_time = models.DateTimeField(validators=[date_field_validator])
 
     class Meta:
         verbose_name = "Запись"
@@ -54,6 +57,10 @@ class Record(models.Model):
     def create(cls, **kwargs):
         record = cls(**kwargs)
         return record
+
+    def registered_patient(self):
+        return f'{self.patient.first_name}-{self.patient.last_name}'
+    registered_patient.short_description = 'Пациент'
 
     def save_record_fields(self, user_data: dict, intervals: list):
         fields = ['record_start_time', 'record_end_time']
