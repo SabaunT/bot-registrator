@@ -49,7 +49,7 @@ def register(update, context):
         patient = Patient.objects.get(telegram_id=user_id)
         patient.save_patient_fields(listed_patient_info)
     except Patient.DoesNotExist:
-        raise InternalTelegramError(f'User {user_id} user does not exist')
+        raise InternalTelegramError(f'User {user_id} user does not exist/ register')
 
     update.message.reply_text(
         text=RegistryManager.choose_record_type(),
@@ -63,7 +63,7 @@ def record(update, context):
 
     context.user_data['record_type'] = Record.REGULAR if record_type == 'Обычная' else Record.EXTENDED
 
-    reply_keyboard = CalendarManager.generate_calendar(Record.REGULAR)
+    reply_keyboard = CalendarManager.generate_calendar(context.user_data['record_type'])
     message_reply = RegistryManager.record_info(record_type, context.user_data['patient_type']) + 'Выберите дату.'
 
     update.message.reply_text(text=message_reply, reply_markup=reply_keyboard)
@@ -82,8 +82,7 @@ def date(update, context):
         message_reply = 'Вы выбрали {}. Выберите интервал записи'.format(chosen_date.strftime("%d/%m/%Y"))
 
         reply_intervals = [days_array]
-        context.bot.send_message(
-            chat_id=update.callback_query.from_user.id,
+        update.message.reply_text(
             text=message_reply,
             reply_markup=ReplyKeyboardMarkup(reply_intervals, one_time_keyboard=True)
         )
@@ -100,7 +99,7 @@ def time_interval(update, context):
     try:
         current_patient = Patient.objects.get(telegram_id=user_id)
     except Patient.DoesNotExist:
-        raise InternalTelegramError(f'User {user_id} does not exist')
+        raise InternalTelegramError(f'User {user_id} does not exist/ time_interval ')
 
     intervals_list = chosen_interval.split('-')
     new_record = Record.create(patient=current_patient)
