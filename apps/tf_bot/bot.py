@@ -28,13 +28,13 @@ def start(update, context):
         logger.info(f'{user_id} tried to use bot, but was stopped.')
         return ConversationHandler.END
 
-    patient, created = Patient.objects.get_or_create(telegram_id=user_id)
-    context.user_data['patient_type'] = 'primary' if created else 'secondary'
+    patient, _ = Patient.objects.get_or_create(telegram_id=user_id)
+    context.user_data['patient_type'] = 'primary' if not patient.phone_number else 'secondary'
 
     update.message.reply_text(
-        text=RegistryManager.greeting(is_new=created),
-        reply_markup=None if created else ReplyKeyboardMarkup(RegistryManager.get_reply_record_type(),
-                                                              one_time_keyboard=True)
+        text=RegistryManager.greeting(is_new=bool(patient.phone_number)),
+        reply_markup=None if not patient.phone_number else ReplyKeyboardMarkup(RegistryManager.get_reply_record_type(),
+                                                                               one_time_keyboard=True)
     )
     return REGISTER if not patient.phone_number else RECORD
 
