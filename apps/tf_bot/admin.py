@@ -5,8 +5,8 @@ from apps.tf_bot.models import Record, Patient
 @admin.register(Record)
 class RecordsAdmin(admin.ModelAdmin):
     list_display = ('registered_patient', 'record_start_time', 'record_end_time')
-    list_filter = ('record_start_time', 'record_end_time')
-    search_fields = ['record_start_time', 'record_end_time']
+    list_filter = ('record_start_time', 'record_end_time', 'patient_id')
+    search_fields = ['record_start_time', 'record_end_time', 'patient_id']
 
 
 @admin.register(Patient)
